@@ -177,7 +177,7 @@ public class BleService extends Service {
                 .setDeviceName(true, names)   // 只扫描指定广播名的设备，可选
                 .setDeviceMac(mac)                  // 只扫描指定mac的设备，可选
                 .setAutoConnect(isAutoConnect)      // 连接时的autoConnect参数，可选，默认false
-                .setScanTimeOut(30000)              // 扫描超时时间，可选，默认10秒
+                .setScanTimeOut(18000)              // 扫描超时时间，可选，默认10秒
                 .build();
         BleManager.getInstance().initScanRule(scanRuleConfig);
     }

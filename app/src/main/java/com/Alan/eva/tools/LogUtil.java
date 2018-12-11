@@ -26,7 +26,7 @@ public class LogUtil {
      * @param log 信息
      */
     public static void info(String log) {
-       info(defaultTag, log);
+      // info(defaultTag, log);
     }
 
     /**

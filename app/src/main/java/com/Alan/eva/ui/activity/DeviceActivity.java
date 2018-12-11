@@ -82,11 +82,13 @@ public class DeviceActivity extends AbsActivity implements View.OnClickListener 
             tv_device_detail_temp.setText(R.string.getting_data);
         }
         //sendCmd(BLEConfig.BLE_EVM_TEMP_GET, null);
-
+        sendflag = true;
 
 //        sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
 
     }
+
+    private boolean sendflag = true;
 
     @Override
     protected void onResume() {
@@ -95,21 +97,26 @@ public class DeviceActivity extends AbsActivity implements View.OnClickListener 
             @Override
             public void run() {
                 sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
+
                 try {
                     Thread.sleep(8000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-        if(tv_device_detail_power.getText().toString().startsWith("正在")) {
-            sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
-            try {
-        Thread.sleep(4000);
-        } catch (InterruptedException e) {
-        e.printStackTrace();
-    }
-            }
-                if(tv_device_detail_power.getText().toString().startsWith("正在")) {
-                    sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
+                if(sendflag) {
+                    if (tv_device_detail_power.getText().toString().startsWith("正在")) {
+                        sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
+                        try {
+                            Thread.sleep(4000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if(sendflag) {
+                        if (tv_device_detail_power.getText().toString().startsWith("正在")) {
+                            sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
+                        }
+                    }
                 }
             }
         }).start();
@@ -136,6 +143,7 @@ public class DeviceActivity extends AbsActivity implements View.OnClickListener 
             SpTools.getInstance(getCurrActivity()).saveMac("", "");
             Intent intent = new Intent();
             intent.putExtra("unbind", true);
+            sendflag = false;
             setResult(RESULT_OK, intent);
             currFinish();
         });
