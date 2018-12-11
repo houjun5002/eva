@@ -43,7 +43,7 @@ import static com.Alan.eva.ui.EApp.getApp;
 
 /**
  * Created by CW on 2017/3/9.
- * 添加新孩子界面
+ * 添加新孩子界面 1
  */
 public class AddChildActivity extends AbsActivity implements View.OnClickListener, IResultHandler {
     private CircleImageView circle_create_new_child_portrait;
