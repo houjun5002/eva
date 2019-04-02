@@ -231,7 +231,7 @@ public class DataActivity extends Activity implements IResultHandler {
 //		public void handleMessage(android.os.Message msg) {
 				closeMprogress();
 				chartView = new LineChartView(getApplicationContext());
-				chartView.setCountY(6);
+				chartView.setCountY(5);
 				chartView.setUnitX("小时");
 				chartView.setUnitY("");
 				if (data1 != null) {
@@ -278,6 +278,7 @@ public class DataActivity extends Activity implements IResultHandler {
 				yAxis.setVisibility(View.INVISIBLE);
 				linechart.removeAllViews();
 				LineCharViewY lineY = new LineCharViewY(getApplicationContext());
+				lineY.setisshow(true);
 				lineY.setCountY(4);
 				lineY.setUnitX("月份");
 				lineY.setUnitY("");
@@ -314,6 +315,8 @@ public class DataActivity extends Activity implements IResultHandler {
 				linechart.removeAllViews();
 				LineCharViewY lineY = new LineCharViewY(getApplicationContext());
 //				LineChartView lineY = new LineChartView(getApplicationContext());
+				Log.e("hjs ","lineY.setisshow(false);==");
+				lineY.setisshow(false);
 
 				//lineY.setCountY(4);
 				//lineY.setCountX(2);
@@ -332,6 +335,7 @@ public class DataActivity extends Activity implements IResultHandler {
 				} else {
 					Toast.makeText(DataActivity.this, "数据错误", Toast.LENGTH_SHORT).show();
 				}
+				//lineY.setisshow(true);
 			}			;
 		}
 		;
@@ -347,8 +351,8 @@ public class DataActivity extends Activity implements IResultHandler {
 		initListener();
 		rbt_date.setChecked(true);
 		Log.e("hjs", "onCreate:onCreateData ");
-		//initData();
-
+//		initData();
+//
 	}
 
 	@Override
@@ -612,6 +616,7 @@ public class DataActivity extends Activity implements IResultHandler {
 		}
 		linechart.removeAllViews();
 		LineCharViewY lineY = new LineCharViewY(getApplicationContext());
+		lineY.setisshow(true);
 		lineY.setCountY(5);
 		lineY.setUnitX("月份");
 		lineY.setUnitY("次数");
@@ -734,12 +739,18 @@ public class DataActivity extends Activity implements IResultHandler {
 	private void getLocalTemps() {
 		ScheduleDAO dao = new ScheduleDAO(this);
 		String[] temps = dao.getTemps();
+
+//		String[]	temps2 = {"10","20","38","40","41","42","42","42","42"};
+//		temps= temps2;
+		if(temps==null) return;
+
+
 		for (int i = 0; i < temps.length; i++) {
 			data1[i] = Float.parseFloat(temps[i]);
 			Log.e("折线图", temps[i]);
 		}
 		chartView = new LineChartView(getApplicationContext());
-		chartView.setCountY(6);
+		chartView.setCountY(5);
 		chartView.setUnitX("小时");
 		chartView.setUnitY("温度");
 		if (data1 != null) {
@@ -751,7 +762,15 @@ public class DataActivity extends Activity implements IResultHandler {
 			Toast.makeText(DataActivity.this, "数据错误", Toast.LENGTH_SHORT).show();
 		}
 		closeMprogress();
+//		data2[0] = 20;
+//		data2[1] = 20;
+//		data2[2] = 20;
+//		data2[3] =0;
+//		data2[4] = 20;
 
+
+
+//		monthHand.sendEmptyMessage(0);
 	}
 
 	/**

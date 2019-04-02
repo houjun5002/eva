@@ -14,7 +14,7 @@
         <android.support.v7.widget.AppCompatTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="选择孩子年龄(岁)" />
+            android:text="选择年龄(岁)" />
 
         <android.support.v7.widget.AppCompatTextView
             android:id="@+id/tv_dialog_age_selector_ok"

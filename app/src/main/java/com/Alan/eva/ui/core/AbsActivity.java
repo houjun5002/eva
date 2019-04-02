@@ -388,4 +388,7 @@ public abstract class AbsActivity extends AppCompatActivity {
          */
         public void denied();
     }
+
+
+
 }

@@ -1,5 +1,6 @@
 package com.Alan.eva.ui.activity;
 
+import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
@@ -51,17 +52,23 @@ import com.Alan.eva.config.BLEConfig;
 import com.Alan.eva.config.BleEvent;
 import com.Alan.eva.config.DownloadConfig;
 import com.Alan.eva.config.URlConfig;
+import com.Alan.eva.foreground.DaemonService;
 import com.Alan.eva.http.core.IResultHandler;
 import com.Alan.eva.http.get.CheckVersionGet;
 import com.Alan.eva.http.get.ChildSummaryGet;
 import com.Alan.eva.http.post.CreateChildPost;
+import com.Alan.eva.http.post.CreateThermometerRecord;
+import com.Alan.eva.http.post.ForgetGetPwdPost;
+import com.Alan.eva.http.post.QueryMonitorPost;
 import com.Alan.eva.model.ChildSummary;
 import com.Alan.eva.model.UserInfo;
 import com.Alan.eva.model.VersionData;
 import com.Alan.eva.result.ChildSummaryRes;
+import com.Alan.eva.result.MonitorRes;
 import com.Alan.eva.result.QueryMonitorRes;
 import com.Alan.eva.result.VersionRes;
 import com.Alan.eva.service.BleService;
+import com.Alan.eva.service.ServiceUtils;
 import com.Alan.eva.service.ToastUtil;
 import com.Alan.eva.tools.LogUtil;
 import com.Alan.eva.tools.SPUtils;
@@ -77,6 +84,8 @@ import com.Alan.eva.ui.dialog.PopuDialog;
 import com.Alan.eva.ui.widget.CircleImageView;
 import com.Alan.eva.ui.widget.PickerView;
 import com.Alan.eva.ui.widget.TempCircleView;
+import com.clj.fastble.BleManager;
+import com.clj.fastble.data.BleDevice;
 import com.github.mikephil.charting.utils.EntryXComparator;
 import com.umeng.analytics.MobclickAgent;
 
@@ -88,7 +97,9 @@ import org.xutils.ex.DbException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static com.Alan.eva.config.BLEConfig.CMD_EXTRA;
@@ -406,13 +417,29 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        post_thermometer_record_time =0 ;
         Intent startCmd = new Intent(getCurrActivity(), BleService.class);
         startService(startCmd);
+
+        startService(new Intent(getApplicationContext(), DaemonService.class));
+
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//                try {
+//                    Thread.sleep(2000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                Intent startCmd = new Intent(getCurrActivity(), BleService.class);
+//                startService(startCmd);
+//            }
+//        }).start();
 
         EventBus.getDefault().register(homecontext);
         bleEvent = new BleEvent();
         startAperture();
-
 
         UserInfo userInfo = getApp().getUserInfo(getCurrActivity());
         if (userInfo != null) {
@@ -439,6 +466,29 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 }
             }
         }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true){
+
+                    try {
+                        Thread.sleep(1000*60*3);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    try {
+                        if (!BleManager.getInstance().isConnected(BleService.evebleDevice)) {
+                            String macAddress = device.getAddress();
+                            connectBle(macAddress);
+                        }
+                    }catch (Exception e){
+
+                    }
+                }
+
+            }
+        }).start();
     }
 
     private void dialogshow(){
@@ -499,6 +549,8 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         if (BluetoothAdapter.checkBluetoothAddress(address)) {
             sendCmd(BLEConfig.BLE_CONNECT_CMD, address);//连接
         } else {
+
+            Log.e("hjs","connectBle.============");
             resetOperate("重新扫描", "体温计校验错误，请尝试扫描其他体温计");
         }
     }
@@ -588,7 +640,6 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     private int isPlay = 0;// 为0时，高温报警执行，为1时，不执行
     private int isKick = 0;// 为0时，蹬被报警执行，为1时，不执行
     private int recordTemp = 0;// 用于判断烧的稳定性
-    private boolean isFever = false;
     private static long subtime1min  = 1000*15;
     private static long subtime10min  = 1000*60*10;
 
@@ -597,8 +648,10 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
     private static long kicksubtime1min  = 1000*15;
     private static long kicksubtime10min  = 1000*60*10;
-
     private static long adayshow = 1000*60*60*8;
+
+//    private static long kicksubtime10min  = 1000*60*5;
+//    private static long adayshow = 1000*60*10;
 
     private static boolean gaowentemp =false;
     CountDownTimer countDownTimer;
@@ -621,18 +674,40 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
     private static double showtemp = 37.5;
 
+   private static long lasttime = 0;
+    private static long nowtime = 0;
     private synchronized void tempplaying(Context con,String n){
             recordTemp++;
+            try {
+                nowtime = (System.currentTimeMillis());
+                int hours = (int) ((nowtime - lasttime) / (1000 * 60 ));
+                System.out.println("两个时间之间的小时差为：" + hours);
+                if (hours < 30) {
+                    gaowentemp = true;
+                    showTempflag = true;
+                } else {
+                    gaowentemp = false;
+                }
+            }catch (Exception e){
+                gaowentemp = false;
+                showTempflag = true;
+            }
+
             /**
              * 持续超过30秒，才会报警
              */
-            if (recordTemp > 6) {
+            if (recordTemp >= 4) {
+                recordTemp = 0;
                 /**
                  * 如果预警开关打开，跳转到闹铃界面
                  */
                 if ((boolean) SPUtils.get(homecontext, "TempIsSwitch", false)) {
                         if((!TempPlayingActivity.isRingremue)&&(!gaowentemp)) {
-                            startdismisscount();
+                            //startdismisscount();
+                           // Date lastnowTime = new Date(System.currentTimeMillis());
+                            lasttime = (System.currentTimeMillis());
+                          //  String retStrFormatNowDate = sdFormatter.format(lastnowTime);
+
                             SPUtils.put(homecontext, "isRing", true);
                             Intent tempIntent = new Intent();
                             tempIntent.setClass(con, TempPlayingActivity.class);
@@ -651,10 +726,6 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                         }
                 }
             }
-            // 一分钟以后，如果温度降下来，则视为一次发烧结束（四秒读取一次体温值，15*4=60s）
-            if (recordTemp >= 15) {
-                isFever = true;
-            }
 
     }
 
@@ -662,11 +733,12 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     private boolean getSuperTempIsSwitchswtich(Context con){
         boolean tem  =false;
         try{
-            tem =(boolean)SPUtils.get(homecontext, "Supertem_Switch", false);
+            tem =(boolean)SPUtils.get(homecontext, "Supertem_Switch", true);
             Log.e("hjs","Supertem_Switch=="+tem);
         }catch (Exception e){
             tem =false;
         }
+        tem = true;
         return tem;
     }
 
@@ -688,12 +760,32 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         }.start();
     }
 
-
+    private static long lasttime_42 = 0;
+    private static long nowtime_42 = 0;
     private void tempplaying42(Context con,String sheshidu){
         if(getSuperTempIsSwitchswtich(con)) {
+
+            try {
+                nowtime_42 = (System.currentTimeMillis());
+                int hours = (int) ((nowtime_42 - lasttime_42) / (1000 * 60));
+                System.out.println("两个时间之间的小时差为：" + hours);
+                if (hours < 30) {
+                    super42 = true;
+                    show42Tempflag = true;
+                } else {
+                    super42 = false;
+                }
+            }catch (Exception e){
+                super42 = false;
+                show42Tempflag = true;
+            }
+
 //            if (!(boolean) SPUtils.get(homecontext, "superisRing", false)) {
                 if((!TempPlayingActivity.isRingremue)&&(!super42)) {
-                    startdismisscount42();
+                   // startdismisscount42();
+
+                    lasttime_42 =(System.currentTimeMillis());
+
                     SPUtils.put(homecontext, "superisRing", true);
                     Intent tempIntent = new Intent();
                     tempIntent.setClass(con, TempPlayingActivity.class);
@@ -771,6 +863,27 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                     tempare = tempare.replaceAll(" ", "");
                     courntTempera = Double.valueOf(tempare);
 
+                    try{
+                     int temphjwd =    Integer.valueOf(hjwendu.replaceAll("℃",""));
+                        int barrary = 100;
+                     if(!TextUtils.isEmpty(BleService.batteryPower)){
+                         barrary  = Integer.valueOf(BleService.batteryPower);
+                     }else{
+                         if(!semdbattasy){
+                             sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
+                             semdbattasy = true;
+                         }
+                     }
+                     if(courntTempera>=37.5){
+                         post_thermometer_record(true,Float.valueOf(tempare),temphjwd,barrary);
+                         tv_home_child_tips.setText(R.string.fever);
+                     }else{
+                         post_thermometer_record(false,Float.valueOf(tempare),temphjwd,barrary);
+                         tv_home_child_tips.setText("您的体温在正常范围 (*^__^*)");
+                     }
+                    }catch (Exception e){
+                        tv_home_child_tips.setText("您的体温在正常范围 (*^__^*)");
+                    }
                     if(courntTempera>=42){
                         AlarmNotificationManager.showHighTempNotification(homecontext, sheshidu);
                         tempplaying42(con,sheshidu);
@@ -784,7 +897,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                             //String strbody = String.valueOf(courntTempera);
                            // Float fbody = Float.valueOf(strbody);
 
-                            tempplaying(con, sheshidu);
+                            tempplaying(con, tempare);
                             {
 //                                AlarmNotificationManager.showHighTempNotification(homecontext, sheshidu);
 //                            MediaPlayer mp = new MediaPlayer();
@@ -918,7 +1031,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         int code = bleEvent.getCode();
         Bundle bundle = bleEvent.getExtra();
         String extra = "";
-
+        LogUtil.inf("==onMessageEventMainThread====code====="+code);
         if (bundle != null) {
             extra = bundle.getString(BLEConfig.MSG_KEY);
         }
@@ -1063,6 +1176,8 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                     //Mackicktemo(getCurrActivity(),extra);
                 }catch (Exception e){
                 }
+
+
               break;
             case BLEConfig.BLE_DEVICE_NOT_FOUND: //体温计不可用，需要重新扫描
                 resetOperate("重新扫描", extra);
@@ -1084,6 +1199,9 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 break;
             case BLEConfig.BLE_RELEASE_DEVICE: //体温计已解除
                 resetOperate("扫描体温计", extra);
+                //this.finish();
+                android.os.Process.killProcess(android.os.Process.myPid());
+                System.exit(0);
                 break;
             case DownloadConfig.DOWN_LOAD_STARTED:
                 showTips(extra);
@@ -1102,6 +1220,8 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         }
     }
 
+    private boolean semdbattasy = false;
+
     public static String hjwendu  = "";
 
     private void createchild(String pid,String mac,String name,String gender,String age,String height,String weight){
@@ -1117,6 +1237,36 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         post.setWeight(weight);
         post.post();
 
+    }
+
+   String  Thermometer_mac;
+    private static   int post_thermometer_record_time;///上传记录次数
+
+    private void  post_thermometer_record(boolean ifsupertemp,float temperature,int rommtemp,int batt){
+    if((post_thermometer_record_time<0)||(post_thermometer_record_time>100)){
+        post_thermometer_record_time = 0;
+    }
+        post_thermometer_record_time++;
+        if((post_thermometer_record_time>=12)||ifsupertemp){
+//        if(true){
+            post_thermometer_record_time = 0;
+            CreateThermometerRecord   post = new CreateThermometerRecord();
+            post.code(0x0031);
+            post.handler(this);
+            post.setBase_station_mac("000000000000000000000000");
+            if (device != null) {
+                if (TextUtils.isEmpty(Thermometer_mac)) {
+                    Thermometer_mac = device.getAddress();
+                    Thermometer_mac = Thermometer_mac.replaceAll(":", "");
+                }
+                post.setThermometer_mac(Thermometer_mac);
+            }
+            post.setPatient_temperature(temperature);
+            post.setRoom_temperature(rommtemp);
+            post.setBattery_level(batt);
+
+            post.post();
+        }
     }
 
     /**
@@ -1241,7 +1391,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         if (intent != null) {
             String cid = intent.getStringExtra("cid");
             if (!TextUtils.isEmpty(cid)) {
-                summaryGet(cid);
+                //summaryGet(cid);
                 sendCmd(BLEConfig.CHILD_ID_CMD, cid);//切换孩子
             }
         }
@@ -1254,6 +1404,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 if (unbind) {
                     device = null;
                     LogUtil.info("体温计被解除了");
+                    Log.e("hjs_home","onActivityResult");
                     sendCmd(BLEConfig.BLE_DISCONNECT_CMD, null);//连接
                 }
             } else if (requestCode == LOGIN_CODE) {
@@ -1342,14 +1493,21 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
     @Override
     protected void onDestroy() {
-        device = null;
-        try {
-            MonitorActivity.stopMonitor();
-            EventBus.getDefault().unregister(homecontext);
-            sendCmd(BLEConfig.STOP_SERVICE_CMD, null);//结束服务
-        }catch (Exception e){
+        Log.e("hjs","onDestroy");
+        semdbattasy = false;
+        super42 = false;
+        show42Tempflag = true;
+        showTempflag  = true;
+        gaowentemp =false;
 
-        }
+//        device = null;
+//        try {
+//            MonitorActivity.stopMonitor();
+//            EventBus.getDefault().unregister(homecontext);
+//            sendCmd(BLEConfig.STOP_SERVICE_CMD, null);//结束服务
+//        }catch (Exception e){
+//
+//        }
         super.onDestroy();
     }
 
@@ -1429,6 +1587,16 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             } else {
                 showTips(res.msg());
             }
+        }else if(code == ChECK_MONITOR){
+            try {
+                MonitorRes res = Tools.json2Bean(result, MonitorRes.class);
+                LogUtil.info("getFever_times===" + res.getMessage().getFever_times());
+              String  fstime =   res.getMessage().getFever_times();
+                tv_home_child_count.setText(fstime+"次");
+            }catch (Exception e){
+
+            }
+
         }
 //        else  if(code == ADD_MONITOR){
 //            QueryMonitorRes res = Tools.json2Bean(result, QueryMonitorRes.class);
@@ -1506,6 +1674,20 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             tv_home_child_age.setText("");
             tv_home_child_gender.setText("");
         }
+
+
+        try{
+            UserInfo userInfo = getApp().getUserInfo(this);
+            if(userInfo==null){
+                userInfo = new UserInfo();
+            }
+            if((userInfo.getUid()!=null)) {
+                addMonitor(userInfo.getUid(),userInfo.getMac());
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
 
     }
 
@@ -1769,5 +1951,43 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         }
     }
 
+
+//    public void requestMultiPermissionbt(){
+//        requestPermissions(this, new String[]{
+//                        Manifest.permission.BLUETOOTH,},
+//                new RequestPermissionCallBack() {
+//                    @Override
+//                    public void granted() {
+//                        BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
+//                        if (bluetooth == null) {
+//                            //showBleErrorDialog();
+//                            return;
+//                        }
+//
+//                        if(ServiceUtils.isServiceRunning(getCurrActivity(),"BleService")){
+//                            BleService    bleserver =  new BleService();
+//                            bleserver.stopSelf();
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void denied() {
+//                        Toast.makeText(HomeActivity.this, "获取权限失败，正常功能受到影响", Toast.LENGTH_LONG).show();
+//                    }
+//                });
+//    }
+
+
+    private final int ChECK_MONITOR = 0x0146;
+
+    private void addMonitor(String uid, String mac) {
+        QueryMonitorPost post = new QueryMonitorPost();
+        post.code(ChECK_MONITOR);
+        post.handler(this);
+        post.setThermometerID(mac);
+        post.setPid(uid);
+        //post.setUsername(username);
+        post.post();
+    }
 
 }

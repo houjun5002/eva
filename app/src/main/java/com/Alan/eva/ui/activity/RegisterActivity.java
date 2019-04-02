@@ -131,7 +131,7 @@ public class RegisterActivity extends AbsActivity implements OnClickListener, IR
         }
         String pwd = et_reg_pwd.getText().toString();
         if (TextUtils.isEmpty(pwd)) {
-            showTips("请输入密码");
+            showTips("请输入数字密码");
             return;
         }
         boolean checked = cb_reg_user_agreement.isChecked();

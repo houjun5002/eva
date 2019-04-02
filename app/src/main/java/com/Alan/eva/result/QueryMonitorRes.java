@@ -9,6 +9,15 @@ public class QueryMonitorRes extends Res {
     private String body_temperature;
     private String room_temperature;
     private String power;
+    private String fever_times;
+
+    public String getFever_times() {
+        return fever_times;
+    }
+
+    public void setFever_times(String fever_times) {
+        this.fever_times = fever_times;
+    }
 
     public String getCreate_time() {
         return create_time;

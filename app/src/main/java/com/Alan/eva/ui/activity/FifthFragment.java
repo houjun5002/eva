@@ -87,9 +87,11 @@ public class FifthFragment extends FragmentActivity implements OnClickListener {
 
 		supertem = (CheckBox) findViewById(R.id.setF_super_tempswitch);
 		lowpower = (CheckBox) findViewById(R.id.setF_lowpower_tempswitch);
-		supertem.setOnClickListener(this);
+//		supertem.setOnClickListener(this);
 		lowpower.setOnClickListener(this);
-		supertem.setChecked(getSuperTempIsSwitchswtich());
+
+		supertem.setChecked(true);
+		supertem.setClickable(false);
 		lowpower.setChecked(getlowerTempIsSwitchswtich());
 
 //		layoutVir = (LinearLayout) findViewById(R.id.fifthF_layout_vir);
@@ -103,7 +105,7 @@ public class FifthFragment extends FragmentActivity implements OnClickListener {
 	private boolean getSuperTempIsSwitchswtich(){
 		boolean tem  =false;
 		try{
-			tem =(boolean)SPUtils.get(this, "Supertem_Switch", false);
+			tem =(boolean)SPUtils.get(this, "Supertem_Switch", true);
 			Log.e("hjs","Supertem_Switch=="+tem);
 		}catch (Exception e){
 			tem =false;

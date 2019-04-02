@@ -13,7 +13,7 @@
         <android.support.v7.widget.AppCompatTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="选择孩子身高(cm)" />
+            android:text="选择身高(cm)" />
 
         <android.support.v7.widget.AppCompatTextView
             android:id="@+id/tv_dialog_height_selector_ok"

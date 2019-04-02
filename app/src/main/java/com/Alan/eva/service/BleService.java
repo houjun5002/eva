@@ -1,18 +1,27 @@
 package com.Alan.eva.service;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
+import android.content.AsyncQueryHandler;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -25,6 +34,7 @@ import com.Alan.eva.service.callback.DataBleCallBackEx;
 import com.Alan.eva.service.fastble.comm.ObserverManager;
 import com.Alan.eva.service.receiver.BleConnectReceiver;
 import com.Alan.eva.tools.LogUtil;
+import com.Alan.eva.ui.activity.HomeActivity;
 import com.clj.fastble.BleManager;
 import com.clj.fastble.callback.BleGattCallback;
 import com.clj.fastble.callback.BleScanCallback;
@@ -59,6 +69,7 @@ public class BleService extends Service {
     private BluetoothGatt bluetoothGatt;
     private BluetoothAdapter bluetooth;
 
+    private final static int GOHNSON_ID = 1000;
 //    public static BluetoothAdapter BluetoothAdapter;
 
     private BleEvent bleEvent;
@@ -70,11 +81,11 @@ public class BleService extends Service {
     /**
      * 电池电量，如果有值了，就不要去获取电量信息了
      */
-    private String batteryPower;
+    public static String batteryPower;
     private String cid;
     private DataBleCallBackEx callBack;
 
-    BleDevice evebleDevice;
+  public static   BleDevice evebleDevice;
 
     @Nullable
     @Override
@@ -84,6 +95,9 @@ public class BleService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Notification notification = new Notification();
+        PendingIntent pendingintent = PendingIntent.getActivity(this, 0, new Intent(this, HomeActivity.class), 0);
+        startForeground(0x111, notification);
         return START_STICKY;
     }
 
@@ -112,6 +126,7 @@ public class BleService extends Service {
         openBle();
     }
 
+
     @Override
     public void onDestroy() {
         EventBus.getDefault().unregister(this);
@@ -126,15 +141,21 @@ public class BleService extends Service {
         super.onDestroy();
     }
 
+//    private boolean openflag = true;
     /**
      * 打开蓝牙
      */
     private void openBle() {
+        Log.e("hjs","==============openBle=========");
         if (!bluetooth.isEnabled()){
+//            openflag =false;
             BleManager.getInstance().enableBluetooth();
             LogUtil.inf("bluetooth.enable");
-            bluetooth.enable();
+            //bluetooth.enable();
+
         }
+
+
     }
 
 
@@ -271,9 +292,10 @@ public class BleService extends Service {
                 }
                 break;
             case BLEConfig.BLE_DISCONNECT_CMD:
-                stopLoop();
+                Log.e("hjsBLE_DISCONNECT_CMD","BLE_DISCONNECT_CMD");
+               // stopLoop();
                 LogUtil.info("BLE_DISCONNECT_CMD");
-                disconnect();
+               // disconnect();
                 resetBleStatus("体温计已解除，请重新扫描");
                 break;
             case BLEConfig.CHILD_ID_CMD:  //  切换孩子id
@@ -390,6 +412,8 @@ public class BleService extends Service {
      * 断开连接
      */
     public void disconnect() {
+        Log.e("hjsbleserver","disconnect");
+
         if (bluetoothGatt != null) {
             bluetoothGatt.disconnect();
             bluetoothGatt.close();
@@ -399,14 +423,16 @@ public class BleService extends Service {
         }
 
 
-        if (BleManager.getInstance().isConnected(evebleDevice)) {
-
-            LogUtil.info("isConnected.isConnected"+evebleDevice.getName());
-
-            BleManager.getInstance().disconnect(evebleDevice);
-        }
-        //BleManager.getInstance().disconnect(evebleDevice);
+//        if (BleManager.getInstance().isConnected(evebleDevice)) {
+//
+//            Log.e("hjsbleserver","isConnected.isConnected"+evebleDevice.getName());
+//            BleManager.getInstance().disconnect(evebleDevice);
+//        }
         BleManager.getInstance().disconnectAllDevice();
+
+
+        //BleManager.getInstance().disconnect(evebleDevice);
+        //BleManager.getInstance().disconnectAllDevice();
         tempCharacteristic = null;
         //evebleDevice = null; 重新连接
 
@@ -428,6 +454,8 @@ public class BleService extends Service {
         scheduledExecutor.scheduleWithFixedDelay(() ->
                 tempHandler.sendEmptyMessage(LOOPER_CODE), 1, 30, TimeUnit.SECONDS);
     }
+
+    ////遍历记录startLoopTemp
 
     /**
      * 关闭循环遍历数据
@@ -480,21 +508,86 @@ public class BleService extends Service {
         EventBus.getDefault().post(bleEvent);
     }
 
-    /***
+
+
+
+        /***
      * 这是一个内部成员
      */
     private  Handler tempHandler = new Handler(msg -> {
         if (msg.what == LOOPER_CODE) {
-            readTemp();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    readTemp();
+                }
+            }).start();
         }
         return false;
     });
 
+
+
     private BluetoothGattCharacteristic tempCharacteristic;
 
-    /**
-     * 读取温度数据
-     */
+//    /**
+//     * 读取温度数据
+//     */
+//    private void readTemp() {
+//        LogUtil.info("获取一次温度数据=="+tempCharacteristic);
+//        if (tempCharacteristic != null) {
+//            bluetoothGatt.readCharacteristic(tempCharacteristic);
+//            try {
+//                Thread.sleep(500);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            callBack.onCharacteristicRead(bluetoothGatt,tempCharacteristic, BluetoothGatt.GATT_SUCCESS);
+//            return;
+//        }
+//        BleDevice bleDevice = evebleDevice;
+//        String name = bleDevice.getName();
+//        String mac = bleDevice.getMac();
+//        BluetoothGatt gatt = BleManager.getInstance().getBluetoothGatt(bleDevice);
+//        bluetoothGatt = gatt;
+////        List<BluetoothGattService> serviceList =new List<BluetoothGattService>() {
+////        };
+////        for (BluetoothGattService service : gatt.getServices()) {
+////            serviceList.add(service)
+////        }
+//        //LogUtil.info("二二二次温度数据=="+tempCharacteristic);
+//        if(bluetoothGatt==null)return;
+//        List<BluetoothGattService> serviceList = bluetoothGatt.getServices();
+//        if (serviceList == null || serviceList.size() <= 0) {
+//            LogUtil.info("服务特征值列表为空了");
+//            return;
+//        }
+//        for (BluetoothGattService gattService : serviceList) { //遍历 体温计的所有特征值
+//            String parentUuid = gattService.getUuid().toString();
+//
+//            if (TextUtils.equals(parentUuid, BLEConfig.TEMPERATURE_SERVICES)) { //体温计包含所需的服务列表  根据特征值查找服务
+//                List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
+//
+//                for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {  //遍历特征值服务中存在的数据存储点
+//                    String childUuid = gattCharacteristic.getUuid().toString();
+//                    if (TextUtils.equals(childUuid, BLEConfig.TEMPERATURE_CHARACTERISTICS)) { //服务列表中有所需的特征值数据
+//                        int charaProp = gattCharacteristic.getProperties();
+//                        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+//                            tempCharacteristic = gattCharacteristic;
+//                            bluetoothGatt.readCharacteristic(gattCharacteristic);
+//                            try {
+//                                Thread.sleep(500);
+//                            } catch (InterruptedException e) {
+//                                e.printStackTrace();
+//                            }
+//                            callBack.onCharacteristicRead(bluetoothGatt,tempCharacteristic, BluetoothGatt.GATT_SUCCESS);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+    BleDevice bleDevice;
     private void readTemp() {
         LogUtil.info("获取一次温度数据=="+tempCharacteristic);
         if (tempCharacteristic != null) {
@@ -507,35 +600,18 @@ public class BleService extends Service {
             callBack.onCharacteristicRead(bluetoothGatt,tempCharacteristic, BluetoothGatt.GATT_SUCCESS);
             return;
         }
-
-        BleDevice bleDevice = evebleDevice;
+        bleDevice = evebleDevice;
         String name = bleDevice.getName();
         String mac = bleDevice.getMac();
         BluetoothGatt gatt = BleManager.getInstance().getBluetoothGatt(bleDevice);
-
         bluetoothGatt = gatt;
-//        List<BluetoothGattService> serviceList =new List<BluetoothGattService>() {
-//        };
-//        for (BluetoothGattService service : gatt.getServices()) {
-//            serviceList.add(service)
-//        }
-
-        //LogUtil.info("二二二次温度数据=="+tempCharacteristic);
         if(bluetoothGatt==null)return;
-
-        List<BluetoothGattService> serviceList = bluetoothGatt.getServices();
-        if (serviceList == null || serviceList.size() <= 0) {
+        BluetoothGattService gattService = bluetoothGatt.getService(UUID.fromString(BLEConfig.TEMPERATURE_SERVICES));
+        if (gattService == null) {
             LogUtil.info("服务特征值列表为空了");
             return;
         }
-        for (BluetoothGattService gattService : serviceList) { //遍历 体温计的所有特征值
-            String parentUuid = gattService.getUuid().toString();
-
-            if (TextUtils.equals(parentUuid, BLEConfig.TEMPERATURE_SERVICES)) { //体温计包含所需的服务列表  根据特征值查找服务
-                List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
-                for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {  //遍历特征值服务中存在的数据存储点
-                    String childUuid = gattCharacteristic.getUuid().toString();
-                    if (TextUtils.equals(childUuid, BLEConfig.TEMPERATURE_CHARACTERISTICS)) { //服务列表中有所需的特征值数据
+               BluetoothGattCharacteristic gattCharacteristic = gattService.getCharacteristic(UUID.fromString( BLEConfig.TEMPERATURE_CHARACTERISTICS));
                         int charaProp = gattCharacteristic.getProperties();
                         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
                             tempCharacteristic = gattCharacteristic;
@@ -547,10 +623,9 @@ public class BleService extends Service {
                             }
                             callBack.onCharacteristicRead(bluetoothGatt,tempCharacteristic, BluetoothGatt.GATT_SUCCESS);
                         }
-                    }
-                }
-            }
-        }
+        gatt =null;
+        gattService = null;
+        gattCharacteristic = null;
     }
 
     /**

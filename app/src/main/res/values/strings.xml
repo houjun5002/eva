@@ -17,13 +17,13 @@
     <string name="close">关闭</string>
     <string name="user_str">用户</string>
     <string name="device_str">体温计</string>
-    <string name="add_new_child">添加孩子</string>
-    <string name="child_detail">孩子详情</string>
+    <string name="add_new_child">添加用户</string>
+    <string name="child_detail">用户详情</string>
     <string name="health_analyze">健康分析</string>
     <string name="monitor">远程体温监测</string>
     <string name="ble_service">蓝牙服务</string>
-    <string name="fever">妈妈，宝宝发烧了!</string>
-    <string name="kick">妈妈，宝宝蹬被了!</string>
+    <string name="fever">用户发烧了!</string>
+    <string name="kick">用户蹬被了!</string>
     <string name="addmonitor">添加体温监控</string>
     <string name="hismonitor">历史体温数据</string>
     <string name="monitormsg">体温:</string>
@@ -32,7 +32,7 @@
 
 
     <string name="device_detail">体温计详情</string>
-    <string name="my_child_list">全部孩子</string>
+    <string name="my_child_list">全部用户</string>
     <string name="create">创建</string>
     <string name="child_gender">性别</string>
     <string name="child_name">姓名</string>
@@ -40,7 +40,7 @@
     <string name="child_height">身高</string>
     <string name="child_weight">体重</string>
     <string name="getting_data">正在获取</string>
-    <string name="pls_input_child_name_like">请输入孩子姓名，例如“张三”</string>
+    <string name="pls_input_child_name_like">请输入姓名，例如“张三”</string>
     <string name="score">分</string>
     <string name="high_temp">高温</string>
     <string name="low_temp">低温</string>
@@ -65,7 +65,7 @@
 	</string>
     <string name="fragment_disclaimer_textthree">2）、用户出于自愿使用本软件，您必须了解使用本软件的风险，在尚未购买产品之前，本公司不承担使用本软件的文章或信息的任何责任。
 	</string>
-    <string name="fragment_disclaimer_textfour">3）、本客户端所有信息仅供参考，不作为个别诊断、用药和使用的依据，不能替代医生和其他医务人员的建议。如发现孩子发烧严重，请立即拨打急救电话送附近医院或医疗机构。如自行使用本客户端资料发生偏差，本公司概不负责，亦不负法律责任。
+    <string name="fragment_disclaimer_textfour">3）、本客户端所有信息仅供参考，不作为个别诊断、用药和使用的依据，不能替代医生和其他医务人员的建议。如发现用户发烧严重，请立即拨打急救电话送附近医院或医疗机构。如自行使用本客户端资料发生偏差，本公司概不负责，亦不负法律责任。
 	</string>
     <string name="fragment_disclaimer_textfive">4）、本客户端对以下情形不承担任何责任：a、因互联网的崩溃或延迟；b、保证任何使用的应用程序的可用性和实效性；c、用户数据操作失误造成的数据损失；d、软件病毒带来的损失；e、与用户系统的软件兼容性
 	</string>
@@ -78,7 +78,7 @@
     <string name="instructionsfour">3）、爆炸危险：严禁在易燃麻醉气体环境中使用本产品；</string>
     <string name="instructionsfive">4）、体温计对病人诊断只起到辅助作用，请医生结合临床表现和症状做出诊断；</string>
     <string name="instructionssix">5）、须时常检查体温计探测探头的佩戴位置和松紧程度，以免松动而导致采集到的数据不准</string>
-    <string name="fragment_aboutus_text">     北京五洲康泰科技有限公司（以下简称五洲康泰），是一家从事医疗器械研究、生产、销售、服务为一体的高新技术企业，也是全球高端医疗设备研发和技术创新的公司之一。本公司自主研发生产的医用核磁共振系列、远程健康监控系列、儿童智能体温计等产品，均已得到国内外广大用户的好评。电子体温计品牌为五洲康泰旗下的自有品牌，主要应用到智能体温计、智能生理监测等婴儿产品系列。
+    <string name="fragment_aboutus_text">     北京五洲康泰科技有限公司（以下简称五洲康泰），是一家从事医疗器械研究、生产、销售、服务为一体的高新技术企业，也是全球高端医疗设备研发和技术创新的公司之一。本公司自主研发生产的医用核磁共振系列、远程健康监控系列、儿童智能体温计等产品，均已得到国内外广大用户的好评。电子体温计品牌为五洲康泰旗下的自有品牌，主要应用到智能体温计、智能生理监测等产品系列。
 	</string>
 
     <string name="data_titile">体温分析</string>
@@ -103,4 +103,12 @@
     <string name="title_activity_alarm">AlarmActivity</string>
     <string name="title_activity_forget_pass">ForgetPass</string>
     <string name="title_activity_data">DataActivity</string>
+    
+    <string name="child_name_txt">用户姓名</string>
+        <string name="child_info_txt">没有您用户的信息，请尝试添加一个</string>
+        <string name="child_dele_txt"> 是否要删除用户的所有信息？若删除将删除用户的温度记录，监护人将无法继续监护用户。是否继续删除？</string>
+        <string name="child_haizi">用户</string>
+        <string name="child_list">用户列表</string>
+    <string name="child_add">添加姓名</string>
+        <string name="child_info">用户详情</string>
 </resources>

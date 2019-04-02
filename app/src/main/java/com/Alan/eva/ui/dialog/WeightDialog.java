@@ -24,7 +24,7 @@ public class WeightDialog extends AbsDialogCreator {
         super(context);
         if (Tools.isListEmpty(weightList)) {
             weightList = new ArrayList<>();
-            for (int i = 10; i <= 60; i++) {
+            for (int i = 1; i <= 200; i++) {
                 weightList.add(String.valueOf(i));
             }
         }

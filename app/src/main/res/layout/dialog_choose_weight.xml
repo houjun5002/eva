@@ -13,7 +13,7 @@
         <android.support.v7.widget.AppCompatTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="选择孩子体重(kg)" />
+            android:text="选择体重(kg)" />
 
         <android.support.v7.widget.AppCompatTextView
             android:id="@+id/tv_dialog_weight_selector_ok"

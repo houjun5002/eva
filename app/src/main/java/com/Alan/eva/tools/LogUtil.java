@@ -26,17 +26,9 @@ public class LogUtil {
      * @param log 信息
      */
     public static void info(String log) {
-      // info(defaultTag, log);
+       info(defaultTag, log);
     }
 
-    /**
-     * 打印信息
-     *
-     * @param log 信息
-     */
-    public static void inf(String log) {
-        info("hjs", log);
-    }
 
 
     /**
@@ -48,6 +40,14 @@ public class LogUtil {
     public static void debug(String tag, String log) {
         Log.d(tag, log);
     }
+    /**
+     * 打印信息
+     *
+     * @param log 信息
+     */
+    public static void inf(String log) {
+        info("hjs", log);
+    }
 
     /**
      * 打印信息，可以自己加标签
@@ -56,6 +56,6 @@ public class LogUtil {
      * @param log 信息
      */
     public static void info(String tag, String log) {
-        Log.i(tag, log);
+        Log.e(tag, log);
     }
 }

@@ -316,7 +316,7 @@
         android:background="@color/white"
         android:gravity="center"
         android:padding="@dimen/size_10"
-        android:text="您的孩子很健康，继续保持哦 (*^__^*) 嘻嘻……" />
+        android:text="您的体温在正常范围 (*^__^*)" />
 
     <LinearLayout
         android:layout_width="match_parent"

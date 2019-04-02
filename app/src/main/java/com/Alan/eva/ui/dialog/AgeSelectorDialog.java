@@ -24,7 +24,7 @@ public class AgeSelectorDialog extends AbsDialogCreator {
         super(context);
         if (Tools.isListEmpty(ages)) {
             ages = new ArrayList<>();
-            for (int i = 2; i <= 15; i++) {
+            for (int i = 0; i <= 100; i++) {
                 ages.add(String.valueOf(i));
             }
         }

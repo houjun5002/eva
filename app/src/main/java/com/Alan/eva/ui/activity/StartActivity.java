@@ -15,10 +15,13 @@ import android.widget.Toast;
 import com.Alan.eva.R;
 import com.Alan.eva.service.BleService;
 import com.Alan.eva.service.ServiceUtils;
+import com.Alan.eva.tools.LogUtil;
+import com.Alan.eva.tools.SPUtils;
 import com.Alan.eva.tools.SpTools;
 import com.Alan.eva.ui.EApp;
 import com.Alan.eva.ui.core.AbsActivity;
 import com.Alan.eva.ui.dialog.OperateDialog;
+import com.clj.fastble.BleManager;
 
 public class StartActivity extends AbsActivity {
     private final int GOTO_GUIDE = 0x0001;
@@ -49,17 +52,29 @@ public class StartActivity extends AbsActivity {
         EApp.getApp().setScreenWidth(dm.widthPixels);
         EApp.getApp().setScreenHeight(dm.heightPixels);
         /*获取屏幕宽度 结束*/
+
+
+        requestMultiPermission();
+
         BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
         if (bluetooth == null) {
             showBleErrorDialog();
             return;
         }
 
-        if(ServiceUtils.isServiceRunning(this,"BleService")){
+//        if (!bluetooth.isEnabled()){
+////            openflag =false;
+//            BleManager.getInstance().enableBluetooth();
+//            LogUtil.inf("bluetooth.enable");
+//            bluetooth.enable();
+//
+//        }
+
+        if(ServiceUtils.isServiceRunning(getCurrActivity(),"BleService")){
             BleService    bleserver =  new BleService();
             bleserver.stopSelf();
         }
-        requestMultiPermission();
+
         //checkIsFirst();
     }
 
@@ -106,13 +121,13 @@ public class StartActivity extends AbsActivity {
     }
     public void requestMultiPermission(){
         requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.BLUETOOTH,
+                        Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.BLUETOOTH,
                         Manifest.permission.READ_PHONE_STATE,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.INTERNET},
                 new RequestPermissionCallBack() {
                     @Override
                     public void granted() {
                         checkIsFirst();
+                        //requestMultiPermissionbt();
                         //Toast.makeText(StartActivity.this, "获取权限成功，执行正常操作", Toast.LENGTH_LONG).show();
                     }
 
@@ -123,4 +138,33 @@ public class StartActivity extends AbsActivity {
                     }
                 });
     }
+
+
+
+//    public void requestMultiPermissionbt(){
+//        requestPermissions(this, new String[]{
+//                        Manifest.permission.BLUETOOTH,},
+//                new RequestPermissionCallBack() {
+//                    @Override
+//                    public void granted() {
+//                        BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
+//                        if (bluetooth == null) {
+//                            showBleErrorDialog();
+//                            return;
+//                        }
+//
+//                        if(ServiceUtils.isServiceRunning(getCurrActivity(),"BleService")){
+//                            BleService    bleserver =  new BleService();
+//                            bleserver.stopSelf();
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void denied() {
+//                        Toast.makeText(StartActivity.this, "获取权限失败，正常功能受到影响", Toast.LENGTH_LONG).show();
+//                        StartActivity.this.finish();
+//                    }
+//                });
+//    }
+
 }

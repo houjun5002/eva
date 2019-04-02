@@ -99,7 +99,7 @@ public class LoginActivity extends AbsActivity implements IResultHandler, View.O
         }
         String pwd = et_login_password.getText().toString();
         if (TextUtils.isEmpty(pwd)) {
-            showTips("请输入密码");
+            showTips("请输入数字密码");
             return;
         }
         LoginPost post = new LoginPost();

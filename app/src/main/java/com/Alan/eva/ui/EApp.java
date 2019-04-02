@@ -7,14 +7,18 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.Alan.eva.BuildConfig;
+import com.Alan.eva.config.BLEConfig;
 import com.Alan.eva.model.UserInfo;
 import com.Alan.eva.service.BleService;
 import com.Alan.eva.service.ServiceUtils;
 import com.Alan.eva.tools.LogUtil;
 import com.Alan.eva.tools.SpTools;
 import com.Alan.eva.tools.Tools;
+import com.Alan.eva.ui.activity.MonitorActivity;
+import com.clj.fastble.BleManager;
 import com.umeng.analytics.MobclickAgent;
 
+import org.greenrobot.eventbus.EventBus;
 import org.xutils.DbManager;
 import org.xutils.db.table.TableEntity;
 import org.xutils.x;
@@ -58,15 +62,31 @@ public class EApp extends Application {
         return app;
     }
 
+
+
+
     @Override
     public void onTerminate() {
-//        if(ServiceUtils.isServiceRunning(this,"BleService")){
-//            BleService bleserver =  new BleService();
-//            bleserver.stopSelf();
-//        }
+        try {
+            MonitorActivity.stopMonitor();
+            EventBus.getDefault().unregister(app);
+        }catch (Exception e){
+        }
+
+
+        BleManager.getInstance().disableBluetooth();
+        if(ServiceUtils.isServiceRunning(this,"BleService")){
+            BleService bleserver =  new BleService();
+            bleserver.stopSelf();
+        }
         super.onTerminate();
+
+
+
+
         LogUtil.info("应用挂了~~~~");
     }
+
 
     /**
      * 获取用户信息内容

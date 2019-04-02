@@ -150,7 +150,8 @@ public class ChildListActivity extends AbsActivity implements PullLoadMoreRecycl
             }
             myChildren = res.getData();
             if (Tools.isListEmpty(myChildren)) {
-                showTips("没有您孩子的信息，请尝试添加一个");
+                String str = getString(R.string.child_info_txt);
+                showTips(""+str);
                 return;
             }
             notifyList(myChildren);

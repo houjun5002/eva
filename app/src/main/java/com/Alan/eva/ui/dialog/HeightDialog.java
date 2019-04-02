@@ -25,7 +25,7 @@ public class HeightDialog extends AbsDialogCreator {
         super(context);
         if (Tools.isListEmpty(highList)) {
             highList = new ArrayList<>();
-            for (int i = 50; i <= 150; i += 2) {
+            for (int i = 20; i <= 220; i += 2) {
                 highList.add(String.valueOf(i));
             }
         }

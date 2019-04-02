@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 
@@ -171,6 +172,10 @@ public class LineCharViewY extends View {
 			}
 		}
 	}
+	private   boolean isshow  =true;
+	public void setisshow(boolean isd){
+		isshow = isd;
+	}
 
 	/**
 	 * 画折线
@@ -193,9 +198,12 @@ public class LineCharViewY extends View {
 		// 绘制实际曲线图
 		for (int i = 0; i < countX; i++) {
 
-			canvas.drawText(((int)y[i]) + "", spaceLeft + pieceX * (i)+3, mHeight + spaceTop - mHeight * y[i] / maxDataY - 10,
-					pTag);
-			canvas.drawCircle(spaceLeft + pieceX * (i), mHeight + spaceTop - mHeight * y[i] / maxDataY, 6, pLine);
+			Log.e("hjs ","isshow=="+isshow);
+			if(isshow) {
+				canvas.drawText(((int) y[i]) + "", spaceLeft + pieceX * (i) + 3, mHeight + spaceTop - mHeight * y[i] / maxDataY - 10,	pTag);
+
+				canvas.drawCircle(spaceLeft + pieceX * (i), mHeight + spaceTop - mHeight * y[i] / maxDataY, 6, pLine);
+			}
 
 			if (i < countX - 1) {
 				canvas.drawLine(spaceLeft + pieceX * (i), mHeight + spaceTop - mHeight * y[i] / maxDataY,

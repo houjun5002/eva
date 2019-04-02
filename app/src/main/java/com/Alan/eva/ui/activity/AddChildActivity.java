@@ -43,7 +43,7 @@ import static com.Alan.eva.ui.EApp.getApp;
 
 /**
  * Created by CW on 2017/3/9.
- * 添加新孩子界面 1
+ * 添加新孩子界面 11
  */
 public class AddChildActivity extends AbsActivity implements View.OnClickListener, IResultHandler {
     private CircleImageView circle_create_new_child_portrait;
@@ -100,7 +100,7 @@ public class AddChildActivity extends AbsActivity implements View.OnClickListene
         String mac =myuserinfo.getMac();
 
         if(TextUtils.isEmpty(mac)){
-            tv_create_new_child_mac.setText("未绑定蓝牙体温计、不能添加孩子");
+            tv_create_new_child_mac.setText("未绑定蓝牙体温计、不能添加"+getString(R.string.child_haizi));
         }else{
             tv_create_new_child_mac.setText(mac);
         }
@@ -270,23 +270,23 @@ public class AddChildActivity extends AbsActivity implements View.OnClickListene
         }
         name = et_create_new_child_name.getText().toString();
         if (TextUtils.isEmpty(name)) {
-            showTips("请输入孩子名称");
+            showTips("请输入"+getString(R.string.child_haizi)+"名称");
             return;
         }
         if (TextUtils.isEmpty(gender)) {
-            showTips("请选择孩子性别");
+            showTips("请选择"+getString(R.string.child_haizi)+"性别");
             return;
         }
         if (TextUtils.isEmpty(age)) {
-            showTips("请选择孩子年龄");
+            showTips("请选择"+getString(R.string.child_haizi)+"年龄");
             return;
         }
         if (TextUtils.isEmpty(height)) {
-            showTips("请选择孩子身高");
+            showTips("请选择"+getString(R.string.child_haizi)+"身高");
             return;
         }
         if (TextUtils.isEmpty(weight)) {
-            showTips("请选择孩子体重");
+            showTips("请选择"+getString(R.string.child_haizi)+"体重");
             return;
         }
 
@@ -317,7 +317,7 @@ public class AddChildActivity extends AbsActivity implements View.OnClickListene
     @Override
     public void handleStart(int code) {
         if (code == CHILD_CREATE) {
-            loading("正在创建孩子...");
+            loading("正在创建"+getString(R.string.child_haizi)+"...");
         }
     }
 
@@ -355,7 +355,7 @@ public class AddChildActivity extends AbsActivity implements View.OnClickListene
     @Override
     public void handleError(int code) {
         if (code == CHILD_CREATE) {
-            showTips("创建孩子失败，请重试");
+            showTips("创建失败，请重试");
         }
     }
 

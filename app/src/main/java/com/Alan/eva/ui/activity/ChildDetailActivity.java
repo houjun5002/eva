@@ -336,7 +336,7 @@ public class ChildDetailActivity extends AbsActivity implements IResultHandler, 
      */
     private void deleteChild() {
         OperateDialog dialog = new OperateDialog(getCurrActivity());
-        dialog.setContent("是否要删除孩子的所有信息？若删除将删除孩子的温度记录，监护人将无法继续监护孩子。是否继续删除？");
+        dialog.setContent(""+getString(R.string.child_dele_txt));
         dialog.setOk("删除");
         dialog.setOnOk(v -> {
             dialog.dismiss();

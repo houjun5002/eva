@@ -100,6 +100,7 @@ public class MonitorActivity extends AbsActivity implements IResultHandler, Call
 
 //        String result = "{\"Message\":{\"count\":1,\"room_temperature\":40,\"body_temperature\":40.0,\"power\":95},\"Code\":2}";
 //        MonitorRes res = Tools.json2Bean(result, MonitorRes.class);
+        //tv_monitor_temp_data.setText("32");
 
     }
 
@@ -236,7 +237,20 @@ public class MonitorActivity extends AbsActivity implements IResultHandler, Call
             MonitorRes res = Tools.json2Bean(result, MonitorRes.class);
             if (res.isOk()) {
                 String temp = res.getData();
-                tv_monitor_temp_data.setText(temp);
+//                if(!TextUtils.isEmpty(temp)){
+
+//                   String textmon =   tv_monitor_temp_data.getText().toString();
+//                   int oldwendu = Integer.valueOf(textmon);
+                  // int newwendu =   Integer.valueOf(temp);
+                   //if(newwendu>0) {
+                       tv_monitor_temp_data.setText(temp);
+//                   }else {
+//                       tv_monitor_temp_data.setText("32");
+//                   }
+//                }else {
+//                    tv_monitor_temp_data.setText("32");
+//                }
+
                 tv_monitor_temp_tips.setText(username+"体温监测中\n"+mac);
             } else {
                 String msg = res.getMessage().msg();
@@ -244,20 +258,20 @@ public class MonitorActivity extends AbsActivity implements IResultHandler, Call
                 tv_monitor_temp_tips.setText(msg);
             }
         } else if (code == ADD_MONITOR) {
-
-            //result = "{\"Message\":{\"count\":1,\"room_temperature\":21,\"body_temperature\":40.0,\"power\":95},\"Code\":2}";
-
-            MonitorRes res = Tools.json2Bean(result, MonitorRes.class);
-            LogUtil.info("res==="+res.getMessage().getBody_temperature());
-            //LogUtil.info("resugetQuerylt==="+res.getQuery().getBody_temperature());
-            //QueryMonitorRes     queres = Tools.json2Bean(res.msg(), QueryMonitorRes.class);
+            try {
+                //result = "{\"Message\":{\"count\":1,\"room_temperature\":21,\"body_temperature\":40.0,\"power\":95},\"Code\":2}";
+                MonitorRes res = Tools.json2Bean(result, MonitorRes.class);
+                LogUtil.info("res===" + res.getMessage().getBody_temperature());
+                //LogUtil.info("resugetQuerylt==="+res.getQuery().getBody_temperature());
+                //QueryMonitorRes     queres = Tools.json2Bean(res.msg(), QueryMonitorRes.class);
 
 //            if (res.isOk()) {
 //                String temp = "";
                 QueryMonitorRes queryres = res.getMessage();
-                if(queryres!=null) {
+                if (queryres != null) {
                     String temp = queryres.getBody_temperature();
                     String room = queryres.getRoom_temperature();
+
 
                     LogUtil.info("getBody_temperature" + temp);
 
@@ -270,51 +284,58 @@ public class MonitorActivity extends AbsActivity implements IResultHandler, Call
                         //userInfo.setCid(""+et_login_phone.getText().toString());
 
                         LogUtil.info("setUserInfo:" + phonemac);
+                        if(temp.startsWith("0.")){
+                            return;
+                        }
 
                         tv_monitor_temp_data.setText(temp);
-                        tv_monitor_temp_tips.setText("体温监测中\n"+mac);
 
-                        homecext.maxMinTemperature(getCurrActivity(),temp+"℃");
+                        tv_monitor_temp_tips.setText("体温监测中\n" + mac);
+
+                        homecext.maxMinTemperature(getCurrActivity(), temp + "℃");
                         //homecext.Mackicktemo(getCurrActivity(),room);
 
                         if (!TextUtils.isEmpty(queryres.getRoom_temperature())) {
-                            tv_monitor_temp_room.setText(queryres.getRoom_temperature()+"℃");
+                            tv_monitor_temp_room.setText(queryres.getRoom_temperature() + "℃");
                         }
 
                         //showLowBatteryWarning();
 
-                        if (!TextUtils.isEmpty(queryres.getPower())){
-                            tv_monitor_temp_power.setText(queryres.getPower()+"%");
+                        if (!TextUtils.isEmpty(queryres.getPower())) {
+                            tv_monitor_temp_power.setText(queryres.getPower() + "%");
 
                             try {
                                 int power = Integer.valueOf(queryres.getPower());
 
 
-                                if(power<=20) {
+                                if (power <= 20) {
                                     if (getlowerTempIsSwitchswtich()) {
-                                        if(!showpower) {
+                                        if (!showpower) {
                                             showLowBatteryWarning();
                                             new Thread(new Runnable() {
                                                 @Override
                                                 public void run() {
                                                     try {
-                                                        Thread.sleep(1000*60*10);
+                                                        Thread.sleep(1000 * 60 * 10);
                                                     } catch (InterruptedException e) {
                                                         e.printStackTrace();
                                                     }
-                                                    showpower =false;
+                                                    showpower = false;
                                                 }
                                             }).start();
                                         }
                                     }
                                 }
-                            }catch (Exception e){
+                            } catch (Exception e) {
 
                             }
                         }
 
                     }
                 }
+            }catch (Exception e){
+
+            }
 //            } else {
 //                //showTips(getcodeStr(res.code()));
 //            }

@@ -35,7 +35,7 @@
                 android:drawableEnd="@drawable/slt_flag_gender"
                 android:gravity="center_vertical"
                 android:padding="@dimen/size_3"
-                android:text="孩子姓名"
+                android:text="@string/child_name_txt"
                 android:textColor="@color/black"
                 android:textSize="@dimen/font_16" />
 

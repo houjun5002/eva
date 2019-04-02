@@ -12,7 +12,7 @@ import android.view.View;
 public class Axis extends View {
 	private int mWidth; // X轴长度
 	private int mHeight; // Y轴长度
-	private int countY = 6; // Y轴坐标数
+	private int countY = 5; // Y轴坐标数
 	private String unitY = "温度"; // Y轴单位
 	private int maxDataY = 1; // Y轴坐标最大值
 	private int spaceLeft = 30 + 5; // 与左边缘的距离
@@ -71,7 +71,7 @@ public class Axis extends View {
 		paint1.setStrokeWidth(1);
 		paint1.setAntiAlias(true);
 		paint1.setColor(Color.GRAY);
-		String[] yValues = {"10","20","30","40","50","60"};//y轴数值
+		String[] yValues = {"0","10","20","30","40","50"};//y轴数值
 		// 画Y轴刻度
 		for (int j = 0; j < countY; j++) {
 			// 绘制Y网格
