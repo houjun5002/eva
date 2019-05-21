@@ -113,7 +113,7 @@ public class StartActivity extends AbsActivity {
 //        }, 0);
 
         boolean isFirst = SpTools.getInstance(getCurrActivity()).isFirstStart();
-            handler.sendEmptyMessageDelayed(isFirst ? GOTO_GUIDE : GOTO_MAIN,isFirst ?500:2000);
+            handler.sendEmptyMessageDelayed(isFirst ? GOTO_GUIDE : GOTO_MAIN,isFirst ?2000:3000);
     }
 
     private void guide() {

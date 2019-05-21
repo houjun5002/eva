@@ -21,6 +21,7 @@ public class BLEConfig {
     public static final int STOP_SERVICE_CMD = 0x0014;  //结束蓝牙服务
     public static final int CHILD_ID_CMD = 0x0015; //绑定孩子id，有网的时候上传数据
     public static final int READ_DEVISE_POWER_CMD = 0x0017; //读取电池电量
+    public static final int MAC_CONNECT_CMD = 0x0019; //连接体温计
     public static final int BLE_CLOSE = 0x0002;//关闭手机蓝牙
 
     //结果返回

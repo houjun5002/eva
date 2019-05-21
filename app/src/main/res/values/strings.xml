@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">智能体温计</string>
+    <string name="app_name">智能穿戴体温计</string>
     <string name="BT_login">登录</string>
     <string name="TV_register">注册</string>
     <string name="str_forget_pwd">忘记密码</string>
@@ -22,8 +22,8 @@
     <string name="health_analyze">健康分析</string>
     <string name="monitor">远程体温监测</string>
     <string name="ble_service">蓝牙服务</string>
-    <string name="fever">用户发烧了!</string>
-    <string name="kick">用户蹬被了!</string>
+    <string name="fever">发烧了!发烧了!</string>
+    <string name="kick">蹬被了!</string>
     <string name="addmonitor">添加体温监控</string>
     <string name="hismonitor">历史体温数据</string>
     <string name="monitormsg">体温:</string>

@@ -247,6 +247,92 @@ public class BleService extends Service {
     }
 
 
+    private void setmacScanRule(String mac) {
+        String[] uuids;
+        String str_uuid = "";
+        if (TextUtils.isEmpty(str_uuid)) {
+            uuids = null;
+        } else {
+            uuids = str_uuid.split(",");
+        }
+        UUID[] serviceUuids = null;
+        if (uuids != null && uuids.length > 0) {
+            serviceUuids = new UUID[uuids.length];
+            for (int i = 0; i < uuids.length; i++) {
+                String name = uuids[i];
+                String[] components = name.split("-");
+                if (components.length != 5){
+                    serviceUuids[i] = null;
+                }else {
+                    serviceUuids[i] = UUID.fromString(uuids[i]);
+                }
+            }
+        }
+
+        String[] names;
+        String str_name = "EVE";
+        if (TextUtils.isEmpty(str_name)) {
+            names = null;
+        } else {
+            names = str_name.split(",");
+        }
+
+        Log.e("hjs","mac "+mac);
+
+        boolean isAutoConnect =true;
+
+        BleScanRuleConfig scanRuleConfig = new BleScanRuleConfig.Builder()
+                .setServiceUuids(serviceUuids)      // 只扫描指定的服务的设备，可选
+                .setDeviceName(true, names)   // 只扫描指定广播名的设备，可选
+                .setDeviceMac(mac)                  // 只扫描指定mac的设备，可选
+                .setAutoConnect(isAutoConnect)      // 连接时的autoConnect参数，可选，默认false
+                .setScanTimeOut(18000)              // 扫描超时时间，可选，默认10秒
+                .build();
+        BleManager.getInstance().initScanRule(scanRuleConfig);
+    }
+    private void startmacScan(String mac) {
+        setmacScanRule(mac);
+
+        BleManager.getInstance().scan(new BleScanCallback() {
+            @Override
+            public void onScanStarted(boolean success) {
+                sendMsg(BLEConfig.BLE_IS_SCANNING, "正在扫描，请提前打开体温计");
+            }
+
+            @Override
+            public void onLeScan(BleDevice bleDevice) {
+                super.onLeScan(bleDevice);
+            }
+
+            @Override
+            public void onScanning(BleDevice bleDevice) {
+                evebleDevice = bleDevice;
+                BluetoothDevice device = evebleDevice.getDevice();
+                LogUtil.info(""+device.getName()+" | "+device.getAddress());
+
+                if ((device!=null) && BluetoothAdapter.checkBluetoothAddress(device.getAddress())) {  //mac地址是否符合要求
+                    String name = device.getName();
+                    if (!TextUtils.isEmpty(name) && name.length() > 3) { //名称是否不为空且长度大于3
+                        if (name.toUpperCase().contains("EVE")) { //体温计是否包含EVE字符
+                            Bundle bundle = new Bundle();
+                            bundle.putParcelable(BLEConfig.DEVICE_KEY, device);
+                            LogUtil.inf("BLE_NEW_DEVICE ====");
+                            sendMsg(BLEConfig.BLE_NEW_DEVICE, bundle);
+
+                            stopScan();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onScanFinished(List<BleDevice> scanResultList) {
+                LogUtil.inf("onScanFinished ====");
+                sendMsg(BLEConfig.BLE_SCAN_FINISH, "扫描结束,连接中...");
+            }
+        });
+    }
+
 
     /**
      * 关闭蓝牙
@@ -290,6 +376,19 @@ public class BleService extends Service {
                         //resetBleStatus("体温计已解除，请重新扫描");
                     }
                 }
+                break;
+            case BLEConfig.MAC_CONNECT_CMD:  //连接体温计
+                Bundle macExtra = bleEvent.getExtra();
+                if (macExtra != null) {
+                   String macExtraString = macExtra.getString(BLEConfig.CMD_EXTRA);
+                    if (macExtraString != null) {
+                        Log.e("hjs","macExtraString="+macExtraString);
+                        startmacScan(macExtraString);
+                    } else {
+                    }
+                }
+
+
                 break;
             case BLEConfig.BLE_DISCONNECT_CMD:
                 Log.e("hjsBLE_DISCONNECT_CMD","BLE_DISCONNECT_CMD");
@@ -406,6 +505,29 @@ public class BleService extends Service {
 //            sendMsg(BLEConfig.BLE_DEVICE_NOT_FOUND, "体温计连接失败，请尝试重启体温计，并重新连接");
 //            return;
 //        }
+    }
+
+    /**
+     * 尝试连接
+     *
+     * @param
+     */
+    private void connectmac(String  bleDevicemac) {
+
+
+            try {
+                BleManager.getInstance().connect(bleDevicemac, callBack);
+                BluetoothDevice bluetoothDevice = BleManager.getInstance().getBluetoothAdapter().getRemoteDevice(bleDevicemac);
+                BleDevice blce = new BleDevice(bluetoothDevice, 0, null, 0);
+                bleDevice =blce;
+                bluetoothGatt = bleDevice.getDevice().connectGatt(this, false, callBack);
+
+                LogUtil.inf("bluetoothGatt==");
+            }catch (Exception e){
+                e.printStackTrace();
+                sendMsg(BLEConfig.BLE_DEVICE_NOT_FOUND, "体温计连接失败，请尝试重启体温计，并重新连接");
+            }
+
     }
 
     /**

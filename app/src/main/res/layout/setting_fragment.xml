@@ -72,7 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:text="42超温提醒"
+            android:text="38.5超温提醒"
             android:textColor="@color/balck"
             android:textSize="15sp" />
 
@@ -151,7 +151,9 @@
         android:id="@+id/setF_layout_selectkick"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginLeft="20dp" >
+        android:layout_marginLeft="20dp"
+        android:visibility="gone"
+        >
 
         <TextView
             android:layout_width="wrap_content"

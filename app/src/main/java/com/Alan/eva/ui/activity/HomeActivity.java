@@ -101,6 +101,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.Alan.eva.config.BLEConfig.CMD_EXTRA;
 import static com.Alan.eva.ui.EApp.getApp;
@@ -169,6 +170,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
         AppCompatTextView tv_home_change_pwd = (AppCompatTextView) getView(R.id.tv_changpwd_setting);
         AppCompatTextView tv_wifi_setting = (AppCompatTextView) getView(R.id.tv_wifi_setting);
+        AppCompatTextView input_mac = (AppCompatTextView) getView(R.id.tv_mac_input);
 
         AppCompatTextView tv_monitor_setting= (AppCompatTextView) getView(R.id.tv_monitor_setting);
 
@@ -225,6 +227,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         tv_home_change_pwd.setOnClickListener(this);
         tv_home_check_new_version.setOnClickListener(this);
         tv_home_log_out.setOnClickListener(this);
+        input_mac.setOnClickListener(this);
         setlistenner();
         connecttime= 0;
 
@@ -376,10 +379,62 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             case R.id.tv_changpwd_setting:
                 startActivity(new Intent(this,ChangePassActivity.class));
                 break;
+            case R.id.tv_mac_input:
+                input_dialogshow();
+                break;
             case R.id.tv_home_log_out:  //退出登录
                 showLogout();
                 break;
         }
+    }
+//    private void getmac(){
+//        String mac="00:00:00:1C:7C:0C";
+//    //正则校验MAC合法性
+//        String patternMac="^[A-F0-9]{2}(-[A-F0-9]{2}){5}$";
+//        if(!Pattern.compile(patternMac).matcher(mac).find()){
+//            ToastUtil.show(getApplicationContext(), "MAC地址格式或者大小写错误");
+//        }
+//    }
+    String phonemac;
+    private void input_dialogshow(){
+        MacInputDialog inputDialog = new MacInputDialog(getCurrActivity());
+        inputDialog.setTitle("请输入要绑定体温计的MAC地址");
+        inputDialog.setContentHint("请输入体温计地址");
+        inputDialog.setOnOk(v -> {
+            phonemac = inputDialog.getContent();
+            if (TextUtils.isEmpty(phonemac)) {
+                inputDialog.errorAlert("请输入体温计地址");
+                return;
+            }
+            inputDialog.dismiss();
+            String  mac = phonemac;
+            if(mac.length()==12) {
+
+                StringBuffer sb = new StringBuffer(mac);
+                for(int i = 2; i < sb.length(); i+=3){
+                    sb.insert(i,":");
+                }
+                mac = (sb.toString().toUpperCase());
+
+                Log.e("hjs", "mac:::" + mac);
+                connectmacBle(mac);
+            }else {
+                ToastUtil.show(getApplicationContext(), "MAC地址格式或者大小写错误");
+            }
+        });
+        inputDialog.setOnCancel(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //currFinish();
+                inputDialog.dismiss();
+            }
+        });
+
+        int wid = getCurrActivity().getResources().getDimensionPixelOffset(R.dimen.size_300);
+        inputDialog.create(wid, ViewGroup.LayoutParams.WRAP_CONTENT);
+        inputDialog.show();
+        if(!TextUtils.isEmpty(phonemac))inputDialog.setContent(""+phonemac);
+
     }
 
 
@@ -472,13 +527,16 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 while (true){
 
                     try {
-                        Thread.sleep(1000*60*3);
+                        Thread.sleep(1000*60);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
 
+                    Log.e("hjs","     while (true){     while (true){     while (true){");
                     try {
+                        Log.e("hjs","="+BleService.evebleDevice);
                         if (!BleManager.getInstance().isConnected(BleService.evebleDevice)) {
+                            Log.e("hjs","  String macAddress = device.getAddress();="+device);
                             String macAddress = device.getAddress();
                             connectBle(macAddress);
                         }
@@ -490,6 +548,8 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             }
         }).start();
     }
+
+    public static boolean ifbleisconnect= false;
 
     private void dialogshow(){
         OperateDialog dialog = new OperateDialog(getCurrActivity());
@@ -554,7 +614,19 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             resetOperate("重新扫描", "体温计校验错误，请尝试扫描其他体温计");
         }
     }
-
+    /**
+     * 根据蓝牙地址进行连接
+     *
+     * @param address mac 地址
+     */
+    public void connectmacBle(String address) {
+        if (BluetoothAdapter.checkBluetoothAddress(address)) {
+            sendCmd(BLEConfig.MAC_CONNECT_CMD, address);//连接
+        } else {
+            Log.e("hjs","connectBle.============");
+            resetOperate("重新扫描", "体温计校验错误，请尝试扫描其他体温计");
+        }
+    }
     /**
      * 重置界面并添加提示信息
      *
@@ -1124,6 +1196,8 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 break;
             case BLEConfig.BLE_SERVER_DISCONNECTED:  //蓝牙服务断开连接了
 
+                if(BleService.evebleDevice!=null)BleManager.getInstance().disconnect(BleService.evebleDevice);
+                BleManager.getInstance().disconnectAllDevice();
                 resetOperate("重新扫描", extra);
 
                 if (device == null) {

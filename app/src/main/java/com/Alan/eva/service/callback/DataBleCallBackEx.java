@@ -289,6 +289,7 @@ public class DataBleCallBackEx extends BleGattCallback implements IResultHandler
     @Override
     public void onConnectFail(BleDevice bleDevice, BleException exception) {
         LogUtil.info("onConnectFail");
+        service.sendMsg(BLEConfig.BLE_DEVICE_NOT_FOUND, "");
 //        LogUtil.inf("onConnectFail exception");
 //        service.sendMsg(BLEConfig.BLE_CONNECT_ERROR, "连接体温计异常，请重试");//正在连接
 //        service.scheduledExecutor = null;

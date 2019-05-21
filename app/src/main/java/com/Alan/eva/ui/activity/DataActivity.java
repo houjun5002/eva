@@ -52,6 +52,7 @@ import org.xutils.x;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -873,6 +874,12 @@ public class DataActivity extends Activity implements IResultHandler {
 	}
 
 	public static void main(String args[]){
+
+		StringBuffer sb = new StringBuffer("112233445566");
+		for(int i = 2; i < sb.length(); i+=3){
+			sb.insert(i,":");
+		}
+		System.out.print(sb.toString());
 
 //		Gson gson = new Gson();
 //		String result2= result;
