@@ -14,6 +14,7 @@ import com.Alan.eva.service.BleService;
 import com.Alan.eva.service.Util;
 import com.Alan.eva.tools.LogUtil;
 import com.Alan.eva.tools.Tools;
+import com.Alan.eva.ui.activity.HomeActivity;
 import com.clj.fastble.callback.BleGattCallback;
 import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.exception.BleException;
@@ -35,13 +36,13 @@ public class DataBleCallBackEx extends BleGattCallback implements IResultHandler
 
     @Override
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-        LogUtil.inf("currState====="+currState);
-        LogUtil.inf("onConnectionStateChange====="+newState);
-        if(newState==0){
-           service.sendMsg(BLEConfig.BLE_CONNECT_CMD, "连接成功，正在读取体温计信息");//连接成功
-            LogUtil.inf("STATE_CONNECTED====="+newState);
-           // service.scanDeviceService();
-        }
+//        LogUtil.inf("currState====="+currState);
+//        LogUtil.inf("onConnectionStateChange====="+newState);
+//        if(newState==0){
+//           //service.sendMsg(BLEConfig.BLE_CONNECT_CMD, "连接成功，正在读取体温计信息");//连接成功
+//            LogUtil.inf("STATE_CONNECTED====="+newState);
+//           // service.scanDeviceService();
+//        }
 //        if (newState == BluetoothProfile.STATE_CONNECTING) {
 //            service.sendMsg(BLEConfig.BLE_CONNECTING, "正在连接体温计，请稍候");//正在连接
 //            LogUtil.inf("BLE_CONNECTING====="+newState);
@@ -289,7 +290,10 @@ public class DataBleCallBackEx extends BleGattCallback implements IResultHandler
     @Override
     public void onConnectFail(BleDevice bleDevice, BleException exception) {
         LogUtil.info("onConnectFail");
-        service.sendMsg(BLEConfig.BLE_DEVICE_NOT_FOUND, "");
+        if(HomeActivity.ifwhiletruefailed) {
+            HomeActivity.ifwhiletruefailed = false;
+            service.sendMsg(BLEConfig.BLE_SCAN_CMD, "");
+        }
 //        LogUtil.inf("onConnectFail exception");
 //        service.sendMsg(BLEConfig.BLE_CONNECT_ERROR, "连接体温计异常，请重试");//正在连接
 //        service.scheduledExecutor = null;

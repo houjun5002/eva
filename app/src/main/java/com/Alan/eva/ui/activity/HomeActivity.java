@@ -71,6 +71,7 @@ import com.Alan.eva.service.BleService;
 import com.Alan.eva.service.ServiceUtils;
 import com.Alan.eva.service.ToastUtil;
 import com.Alan.eva.tools.LogUtil;
+import com.Alan.eva.tools.PathUtils;
 import com.Alan.eva.tools.SPUtils;
 import com.Alan.eva.tools.Tools;
 import com.Alan.eva.tools.alarm.AlarmNotificationManager;
@@ -92,7 +93,15 @@ import com.umeng.analytics.MobclickAgent;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xutils.common.Callback;
+import org.xutils.common.task.PriorityExecutor;
 import org.xutils.ex.DbException;
+import org.xutils.ex.HttpException;
+import org.xutils.http.HttpMethod;
+import org.xutils.http.RequestParams;
+import org.xutils.x;
 
 import java.io.File;
 import java.io.IOException;
@@ -136,12 +145,12 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     private BluetoothDevice device;
     private ImageView img_home_drug, img_home_temperature, img_home_kicked, img_home_data, img_home_alrmIcon;
 
-    private double maxTemperature,minTemperaTure,courntTempera,emvcourntTempera;
+    private double maxTemperature, minTemperaTure, courntTempera, emvcourntTempera;
 
     private double highTemp = 38;
-   static MyHandler  myhomehan;
+    static MyHandler myhomehan;
 
-    public  static  Context homecontext;
+    public static Context homecontext;
 
     @Override
     public Activity getCurrActivity() {
@@ -172,7 +181,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         AppCompatTextView tv_wifi_setting = (AppCompatTextView) getView(R.id.tv_wifi_setting);
         AppCompatTextView input_mac = (AppCompatTextView) getView(R.id.tv_mac_input);
 
-        AppCompatTextView tv_monitor_setting= (AppCompatTextView) getView(R.id.tv_monitor_setting);
+        AppCompatTextView tv_monitor_setting = (AppCompatTextView) getView(R.id.tv_monitor_setting);
 
         tv_home_check_new_version = (AppCompatTextView) getView(R.id.tv_home_check_new_version);
         tv_home_log_out = (AppCompatTextView) getView(R.id.tv_home_log_out);
@@ -189,11 +198,11 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         tv_home_child_count = (AppCompatTextView) getView(R.id.tv_home_child_count);
         tv_home_child_tips = (AppCompatTextView) getView(R.id.tv_home_child_tips);
 
-        img_home_drug = (ImageView)getView(R.id.img_home_drug);
-        img_home_temperature = (ImageView)getView(R.id.img_home_temperature);
-        img_home_kicked = (ImageView)getView(R.id.img_home_quilt);
-        img_home_data = (ImageView)getView(R.id.img_home_data);
-        Button wifibaijianbt =(Button) getView(R.id.wifibaijianbt);
+        img_home_drug = (ImageView) getView(R.id.img_home_drug);
+        img_home_temperature = (ImageView) getView(R.id.img_home_temperature);
+        img_home_kicked = (ImageView) getView(R.id.img_home_quilt);
+        img_home_data = (ImageView) getView(R.id.img_home_data);
+        Button wifibaijianbt = (Button) getView(R.id.wifibaijianbt);
         wifibaijianbt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -212,7 +221,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                     return;
                 }
 
-                Intent intentstartMonitor = new Intent(getCurrActivity(),MonitorActivity.class);
+                Intent intentstartMonitor = new Intent(getCurrActivity(), MonitorActivity.class);
                 startActivity(intentstartMonitor);
             }
         });
@@ -229,7 +238,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         tv_home_log_out.setOnClickListener(this);
         input_mac.setOnClickListener(this);
         setlistenner();
-        connecttime= 0;
+        connecttime = 0;
 
         homecontext = this;
         myhomehan = new MyHandler(getCurrActivity());
@@ -259,8 +268,8 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             @Override
             public void onClick(View v) {
                 // TODO Auto-generated method stub
-				/*
-				 * Intent intent = new Intent(); intent.setClass(getActivity(),
+                /*
+                 * Intent intent = new Intent(); intent.setClass(getActivity(),
 				 * TemperatureActivity.class); startActivity(intent);
 				 */
 
@@ -271,7 +280,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             @Override
             public void onClick(View v) {
                 // TODO Auto-generated method stub
-				/*
+                /*
 				 * Intent intent = new Intent(); intent.setClass(getActivity(),
 				 * KickedActivity.class); startActivity(intent);
 				 */
@@ -291,7 +300,9 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         });
 
     }
+
     PopuDialog popuDialog;
+
     private void startSettimePopu() {
 
         if (popuDialog == null) {
@@ -301,7 +312,9 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         popuDialog.show();
 
     }
+
     KickDialog startKickSet;
+
     private void startKickSettimePopu() {
 
         if (startKickSet == null) {
@@ -311,7 +324,6 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         startKickSet.show();
 
     }
-
 
 
     @Override
@@ -339,7 +351,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 checkVersion();
                 break;
             case R.id.tv_wifi_setting:
-                startActivity(new Intent(this,FifthFragment.class));
+                startActivity(new Intent(this, FifthFragment.class));
 //                gotoDeviceDetail();
                 break;
             case R.id.tv_monitor_setting:
@@ -359,25 +371,25 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                     return;
                 }
 
-                if(!TextUtils.isEmpty(tempaddress)) {
-                    try{
-                       // UserInfo userInfo = getApp().getUserInfo(this);
-                        if(userInfo==null){
+                if (!TextUtils.isEmpty(tempaddress)) {
+                    try {
+                        // UserInfo userInfo = getApp().getUserInfo(this);
+                        if (userInfo == null) {
                             userInfo = new UserInfo();
                         }
                         userInfo.setMac(tempaddress.replaceAll(":", ""));
                         getApp().setUserInfo(userInfo, this);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 
                 }
 
-                Intent intentstartMonitor = new Intent(this,MonitorActivity.class);
+                Intent intentstartMonitor = new Intent(this, MonitorActivity.class);
                 startActivity(intentstartMonitor);
                 break;
             case R.id.tv_changpwd_setting:
-                startActivity(new Intent(this,ChangePassActivity.class));
+                startActivity(new Intent(this, ChangePassActivity.class));
                 break;
             case R.id.tv_mac_input:
                 input_dialogshow();
@@ -395,8 +407,22 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 //            ToastUtil.show(getApplicationContext(), "MAC地址格式或者大小写错误");
 //        }
 //    }
+
+    private void remebermac(String mac) {
+        SharedPreferences pres = getCurrActivity().getSharedPreferences("inputmac", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pres.edit();
+        editor.putString("inputmac", mac);
+        editor.commit();
+    }
+
+    private String getremebermac() {
+        SharedPreferences pres = getCurrActivity().getSharedPreferences("inputmac", Context.MODE_PRIVATE);
+        return pres.getString("inputmac", "");
+    }
+
     String phonemac;
-    private void input_dialogshow(){
+
+    private void input_dialogshow() {
         MacInputDialog inputDialog = new MacInputDialog(getCurrActivity());
         inputDialog.setTitle("请输入要绑定体温计的MAC地址");
         inputDialog.setContentHint("请输入体温计地址");
@@ -407,18 +433,21 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 return;
             }
             inputDialog.dismiss();
-            String  mac = phonemac;
-            if(mac.length()==12) {
+            String mac = phonemac;
+            if (mac.length() == 12) {
 
                 StringBuffer sb = new StringBuffer(mac);
-                for(int i = 2; i < sb.length(); i+=3){
-                    sb.insert(i,":");
+                for (int i = 2; i < sb.length(); i += 3) {
+                    sb.insert(i, ":");
                 }
                 mac = (sb.toString().toUpperCase());
 
+
+                remebermac(mac.replaceAll(":", ""));
+
                 Log.e("hjs", "mac:::" + mac);
                 connectmacBle(mac);
-            }else {
+            } else {
                 ToastUtil.show(getApplicationContext(), "MAC地址格式或者大小写错误");
             }
         });
@@ -430,10 +459,15 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             }
         });
 
+        String remebemac = getremebermac();
+        if (!TextUtils.isEmpty(remebemac)) {
+            phonemac = remebemac;
+        }
+
         int wid = getCurrActivity().getResources().getDimensionPixelOffset(R.dimen.size_300);
         inputDialog.create(wid, ViewGroup.LayoutParams.WRAP_CONTENT);
         inputDialog.show();
-        if(!TextUtils.isEmpty(phonemac))inputDialog.setContent(""+phonemac);
+        if (!TextUtils.isEmpty(phonemac)) inputDialog.setContent("" + phonemac);
 
     }
 
@@ -472,7 +506,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        post_thermometer_record_time =0 ;
+        post_thermometer_record_time = 0;
         Intent startCmd = new Intent(getCurrActivity(), BleService.class);
         startService(startCmd);
 
@@ -514,50 +548,26 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
 //                tv_home_log_out.setVisibility(View.GONE);
 
-              //  dialogshow();
+                //  dialogshow();
 
-                if(TextUtils.isEmpty(userInfo.getMac())) {
+                if (TextUtils.isEmpty(userInfo.getMac())) {
                     showAddChildDialog();
                 }
             }
         }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true){
-
-                    try {
-                        Thread.sleep(1000*60);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                    Log.e("hjs","     while (true){     while (true){     while (true){");
-                    try {
-                        Log.e("hjs","="+BleService.evebleDevice);
-                        if (!BleManager.getInstance().isConnected(BleService.evebleDevice)) {
-                            Log.e("hjs","  String macAddress = device.getAddress();="+device);
-                            String macAddress = device.getAddress();
-                            connectBle(macAddress);
-                        }
-                    }catch (Exception e){
-
-                    }
-                }
-
-            }
-        }).start();
     }
 
-    public static boolean ifbleisconnect= false;
+    public static boolean ifwhiletruefailed = true;
 
-    private void dialogshow(){
+    public static boolean ifbleisconnect = false;
+
+    private void dialogshow() {
         OperateDialog dialog = new OperateDialog(getCurrActivity());
         dialog.setContent("是否远程监控");
         dialog.setOk("确定");
         dialog.setOnOk(v -> {
             dialog.dismiss();
-            Intent intentstartMonitor = new Intent(homecontext,MonitorActivity.class);
+            Intent intentstartMonitor = new Intent(homecontext, MonitorActivity.class);
             startActivity(intentstartMonitor);
         });
         dialog.setOnCancel(v -> {
@@ -599,7 +609,6 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     }
 
 
-
     /**
      * 根据蓝牙地址进行连接
      *
@@ -610,10 +619,11 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             sendCmd(BLEConfig.BLE_CONNECT_CMD, address);//连接
         } else {
 
-            Log.e("hjs","connectBle.============");
+            Log.e("hjs", "connectBle.============");
             resetOperate("重新扫描", "体温计校验错误，请尝试扫描其他体温计");
         }
     }
+
     /**
      * 根据蓝牙地址进行连接
      *
@@ -623,10 +633,11 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         if (BluetoothAdapter.checkBluetoothAddress(address)) {
             sendCmd(BLEConfig.MAC_CONNECT_CMD, address);//连接
         } else {
-            Log.e("hjs","connectBle.============");
+            Log.e("hjs", "connectBle.============");
             resetOperate("重新扫描", "体温计校验错误，请尝试扫描其他体温计");
         }
     }
+
     /**
      * 重置界面并添加提示信息
      *
@@ -640,105 +651,108 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     }
 
 
-    private float getsettemp(){
-        float values =0;
-        SharedPreferences  pre_tempValues = homecontext.getSharedPreferences("sp_da", Context.MODE_PRIVATE);
-        values= pre_tempValues.getFloat("temperature", 0);
-        return values;
-    }
-    private float getkickIsSwitchtemp(){
-        float values =0;
-        SharedPreferences  pre_tempValues = homecontext.getSharedPreferences("kickwendu", Context.MODE_PRIVATE);
-        values= pre_tempValues.getInt("kickwendu", 0);
+    private float getsettemp() {
+        float values = 0;
+        SharedPreferences pre_tempValues = homecontext.getSharedPreferences("sp_da", Context.MODE_PRIVATE);
+        values = pre_tempValues.getFloat("temperature", 0);
         return values;
     }
 
-    private boolean getkickalarmswtich(){
-        boolean tem  =false;
-        try{
+    private float getkickIsSwitchtemp() {
+        float values = 0;
+        SharedPreferences pre_tempValues = homecontext.getSharedPreferences("kickwendu", Context.MODE_PRIVATE);
+        values = pre_tempValues.getInt("kickwendu", 0);
+        return values;
+    }
+
+    private boolean getkickalarmswtich() {
+        boolean tem = false;
+        try {
 
             SharedPreferences pres = homecontext.getSharedPreferences("kickalarm", Context.MODE_PRIVATE);
-            tem =  pres.getBoolean("kickIsSwitch", false);
-            Log.e("hjs","kickIsSwitch=="+tem);
+            tem = pres.getBoolean("kickIsSwitch", false);
+            Log.e("hjs", "kickIsSwitch==" + tem);
 
-        }catch (Exception e){
-            tem =false;
+        } catch (Exception e) {
+            tem = false;
         }
         return tem;
     }
 
 
-
-    private boolean getTempIsSwitchswtich(){
-        boolean tem  =false;
-        try{
-            tem =(boolean)SPUtils.get(homecontext, "TempIsSwitch", false);
-            Log.e("hjs","getTempIsSwitchswtich=="+tem);
-        }catch (Exception e){
-            tem =false;
+    private boolean getTempIsSwitchswtich() {
+        boolean tem = false;
+        try {
+            tem = (boolean) SPUtils.get(homecontext, "TempIsSwitch", false);
+            Log.e("hjs", "getTempIsSwitchswtich==" + tem);
+        } catch (Exception e) {
+            tem = false;
         }
         return tem;
     }
 
-    private  static  boolean showTemp = false;
-    private  static  boolean showTempflag = false;
-     void showTempWarning(String bodytemp) {
-         if(!showTemp) {
-             AlertDialog dialog = new AlertDialog.Builder(homecontext)
-                     .setIcon(R.mipmap.bodytemp)//设置标题的图片
-                     .setTitle("高烧提醒")//设置对话框的标题
-                     .setMessage("请注意,孩子发烧了,体温温度" + bodytemp)//设置对话框的内容
-                     //设置对话框的按钮
-                     .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                         @Override
-                         public void onClick(DialogInterface dialog, int which) {
-                             dialog.dismiss();
-                             showTemp = false;
-                         }
-                     })
-                     .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                         @Override
-                         public void onClick(DialogInterface dialog, int which) {
-                             dialog.dismiss();
-                             showTemp = false;
-                         }
-                     }).create();
-             dialog.show();
-             showTemp = true;
-         }
+    private static boolean showTemp = false;
+    private static boolean showTempflag = false;
+
+    void showTempWarning(String bodytemp) {
+        if (!showTemp) {
+            AlertDialog dialog = new AlertDialog.Builder(homecontext)
+                    .setIcon(R.mipmap.bodytemp)//设置标题的图片
+                    .setTitle("高烧提醒")//设置对话框的标题
+                    .setMessage("请注意,孩子发烧了,体温温度" + bodytemp)//设置对话框的内容
+                    //设置对话框的按钮
+                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            showTemp = false;
+                        }
+                    })
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            showTemp = false;
+                        }
+                    }).create();
+            dialog.show();
+            showTemp = true;
+        }
     }
 
     private int isSuperPlay = 0;
     private int isPlay = 0;// 为0时，高温报警执行，为1时，不执行
     private int isKick = 0;// 为0时，蹬被报警执行，为1时，不执行
     private int recordTemp = 0;// 用于判断烧的稳定性
-    private static long subtime1min  = 1000*15;
-    private static long subtime10min  = 1000*60*10;
+    private static long subtime1min = 1000 * 15;
+    private static long subtime10min = 1000 * 60 * 10;
 
-    private static long subtime1min42  = 1000*15;
-    private static long subtime10min42  = 1000*60*10;
+    private static long subtime1min42 = 1000 * 15;
+    private static long subtime10min42 = 1000 * 60 * 10;
 
-    private static long kicksubtime1min  = 1000*15;
-    private static long kicksubtime10min  = 1000*60*10;
-    private static long adayshow = 1000*60*60*8;
+    private static long kicksubtime1min = 1000 * 15;
+    private static long kicksubtime10min = 1000 * 60 * 10;
+    private static long adayshow = 1000 * 60 * 60 * 8;
 
 //    private static long kicksubtime10min  = 1000*60*5;
 //    private static long adayshow = 1000*60*10;
 
-    private static boolean gaowentemp =false;
+    private static boolean gaowentemp = false;
     CountDownTimer countDownTimer;
+
     private void startdismisscount() {
-        if(countDownTimer!=null)return;
-         countDownTimer = new CountDownTimer(adayshow, kicksubtime10min) {
+        if (countDownTimer != null) return;
+        countDownTimer = new CountDownTimer(adayshow, kicksubtime10min) {
             @Override
             public void onTick(long millisUntilFinished) {
-                LogUtil.inf("onTick+"+millisUntilFinished);
+                LogUtil.inf("onTick+" + millisUntilFinished);
                 showTempflag = !showTempflag;
-                gaowentemp =true;
+                gaowentemp = true;
             }
+
             @Override
             public void onFinish() {
-                gaowentemp=false;
+                gaowentemp = false;
                 LogUtil.inf("onFinish+");
             }
         }.start();
@@ -746,96 +760,100 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
     private static double showtemp = 37.5;
 
-   private static long lasttime = 0;
+    private static long lasttime = 0;
     private static long nowtime = 0;
-    private synchronized void tempplaying(Context con,String n){
-            recordTemp++;
-            try {
-                nowtime = (System.currentTimeMillis());
-                int hours = (int) ((nowtime - lasttime) / (1000 * 60 ));
-                System.out.println("两个时间之间的小时差为：" + hours);
-                if (hours < 30) {
-                    gaowentemp = true;
-                    showTempflag = true;
-                } else {
-                    gaowentemp = false;
-                }
-            }catch (Exception e){
-                gaowentemp = false;
+
+    private synchronized void tempplaying(Context con, String n) {
+        recordTemp++;
+        try {
+            nowtime = (System.currentTimeMillis());
+            int hours = (int) ((nowtime - lasttime) / (1000 * 60));
+            System.out.println("两个时间之间的小时差为：" + hours);
+            if (hours < 30) {
+                gaowentemp = true;
                 showTempflag = true;
+            } else {
+                gaowentemp = false;
             }
+        } catch (Exception e) {
+            gaowentemp = false;
+            showTempflag = true;
+        }
 
+        /**
+         * 持续超过30秒，才会报警
+         */
+        if (recordTemp >= 4) {
+            recordTemp = 0;
             /**
-             * 持续超过30秒，才会报警
+             * 如果预警开关打开，跳转到闹铃界面
              */
-            if (recordTemp >= 4) {
-                recordTemp = 0;
-                /**
-                 * 如果预警开关打开，跳转到闹铃界面
-                 */
-                if ((boolean) SPUtils.get(homecontext, "TempIsSwitch", false)) {
-                        if((!TempPlayingActivity.isRingremue)&&(!gaowentemp)) {
-                            //startdismisscount();
-                           // Date lastnowTime = new Date(System.currentTimeMillis());
-                            lasttime = (System.currentTimeMillis());
-                          //  String retStrFormatNowDate = sdFormatter.format(lastnowTime);
+            if ((boolean) SPUtils.get(homecontext, "TempIsSwitch", false)) {
+                if ((!TempPlayingActivity.isRingremue) && (!gaowentemp)) {
+                    //startdismisscount();
+                    // Date lastnowTime = new Date(System.currentTimeMillis());
+                    lasttime = (System.currentTimeMillis());
+                    //  String retStrFormatNowDate = sdFormatter.format(lastnowTime);
 
-                            SPUtils.put(homecontext, "isRing", true);
-                            Intent tempIntent = new Intent();
-                            tempIntent.setClass(con, TempPlayingActivity.class);
-                            homecontext.startActivity(tempIntent);
-                        }else{
-                            if(showTempflag) {
-                                try {
-                                  double  tempera = Double.valueOf(n);
-                                    if(tempera>showtemp) {
-                                        showTempWarning(n);
-                                    }
-                                }catch (Exception e){
-                                    e.printStackTrace();
-                                }
+                    SPUtils.put(homecontext, "isRing", true);
+                    Intent tempIntent = new Intent();
+                    tempIntent.setClass(con, TempPlayingActivity.class);
+                    homecontext.startActivity(tempIntent);
+                } else {
+                    if (showTempflag) {
+                        try {
+                            double tempera = Double.valueOf(n);
+                            if (tempera > showtemp) {
+                                showTempWarning(n);
                             }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
+                    }
                 }
             }
+        }
 
     }
 
 
-    private boolean getSuperTempIsSwitchswtich(Context con){
-        boolean tem  =false;
-        try{
-            tem =(boolean)SPUtils.get(homecontext, "Supertem_Switch", true);
-            Log.e("hjs","Supertem_Switch=="+tem);
-        }catch (Exception e){
-            tem =false;
+    private boolean getSuperTempIsSwitchswtich(Context con) {
+        boolean tem = false;
+        try {
+            tem = (boolean) SPUtils.get(homecontext, "Supertem_Switch", true);
+            Log.e("hjs", "Supertem_Switch==" + tem);
+        } catch (Exception e) {
+            tem = false;
         }
         tem = true;
         return tem;
     }
 
-    private boolean super42 =false;
+    private boolean super42 = false;
     CountDownTimer countDownTimer42;
     private boolean show42Tempflag = false;
-    private   void startdismisscount42() {
-        if(countDownTimer42!=null)return;
+
+    private void startdismisscount42() {
+        if (countDownTimer42 != null) return;
         countDownTimer42 = new CountDownTimer(adayshow, kicksubtime10min) {
             @Override
             public void onTick(long millisUntilFinished) {
-                super42 =true;
-                show42Tempflag  =!show42Tempflag;
+                super42 = true;
+                show42Tempflag = !show42Tempflag;
             }
+
             @Override
             public void onFinish() {
-                super42=false;
+                super42 = false;
             }
         }.start();
     }
 
     private static long lasttime_42 = 0;
     private static long nowtime_42 = 0;
-    private void tempplaying42(Context con,String sheshidu){
-        if(getSuperTempIsSwitchswtich(con)) {
+
+    private void tempplaying42(Context con, String sheshidu) {
+        if (getSuperTempIsSwitchswtich(con)) {
 
             try {
                 nowtime_42 = (System.currentTimeMillis());
@@ -847,55 +865,58 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 } else {
                     super42 = false;
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 super42 = false;
                 show42Tempflag = true;
             }
 
 //            if (!(boolean) SPUtils.get(homecontext, "superisRing", false)) {
-                if((!TempPlayingActivity.isRingremue)&&(!super42)) {
-                   // startdismisscount42();
+            if ((!TempPlayingActivity.isRingremue) && (!super42)) {
+                // startdismisscount42();
 
-                    lasttime_42 =(System.currentTimeMillis());
+                lasttime_42 = (System.currentTimeMillis());
 
-                    SPUtils.put(homecontext, "superisRing", true);
-                    Intent tempIntent = new Intent();
-                    tempIntent.setClass(con, TempPlayingActivity.class);
-                    homecontext.startActivity(tempIntent);
-                }else{
+                SPUtils.put(homecontext, "superisRing", true);
+                Intent tempIntent = new Intent();
+                tempIntent.setClass(con, TempPlayingActivity.class);
+                homecontext.startActivity(tempIntent);
+            } else {
 
-                    if(show42Tempflag) {
+                if (show42Tempflag) {
 
-                        showTempWarning(sheshidu);
-                    }
-
+                    showTempWarning(sheshidu);
                 }
+
+            }
 
         }
     }
-    private boolean kicktemp =false;
-    private   void kickstartdismisscount() {
-        CountDownTimer countDownTimer = new CountDownTimer(1000*60*10+1050, 1000*60) {
+
+    private boolean kicktemp = false;
+
+    private void kickstartdismisscount() {
+        CountDownTimer countDownTimer = new CountDownTimer(1000 * 60 * 10 + 1050, 1000 * 60) {
             @Override
             public void onTick(long millisUntilFinished) {
-                kicktemp =true;
+                kicktemp = true;
             }
+
             @Override
             public void onFinish() {
-                kicktemp=false;
+                kicktemp = false;
             }
         }.start();
     }
 
-    private void kickpalying( Context con,float kickValuesInt){
+    private void kickpalying(Context con, float kickValuesInt) {
         SharedPreferences pres = homecontext.getSharedPreferences("kickalarm", Context.MODE_PRIVATE);
-       boolean tem =  pres.getBoolean("kickIsSwitch", false);
-        Log.e("hjs","kickIsSwitch=="+tem);
-     float values  =   getkickIsSwitchtemp();
+        boolean tem = pres.getBoolean("kickIsSwitch", false);
+        Log.e("hjs", "kickIsSwitch==" + tem);
+        float values = getkickIsSwitchtemp();
         if (tem) {
             if (kickValuesInt < values) {
                 if (!(boolean) SPUtils.get(homecontext, "dengbei", false)) {
-                    if((!KickPlayingActivity.kickremue)&&(!kicktemp)) {
+                    if ((!KickPlayingActivity.kickremue) && (!kicktemp)) {
                         kickstartdismisscount();
                         SPUtils.put(homecontext, "dengbei", true);
                         Intent Kickintent = new Intent();
@@ -908,7 +929,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                         myhomehan.postDelayed(new Runnable() {
 
                             public void run() {
-                                kicksubtime1min  =kicksubtime10min;
+                                kicksubtime1min = kicksubtime10min;
                                 SPUtils.put(homecontext, "dengbei", false);
                                 isKick = 0;
                             }
@@ -922,44 +943,43 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     }
 
 
-
     /***
      * 记录孩子温度
      * @param sheshidu
      */
-    public void maxMinTemperature(Context con,String sheshidu){
-        if(!TextUtils.isEmpty(sheshidu)){
-            if(sheshidu.contains("℃")){
+    public void maxMinTemperature(Context con, String sheshidu) {
+        if (!TextUtils.isEmpty(sheshidu)) {
+            if (sheshidu.contains("℃")) {
                 try {
                     String tempare = sheshidu.replaceAll("℃", "");
                     tempare = tempare.replaceAll(" ", "");
                     courntTempera = Double.valueOf(tempare);
 
-                    try{
-                     int temphjwd =    Integer.valueOf(hjwendu.replaceAll("℃",""));
+                    try {
+                        int temphjwd = Integer.valueOf(hjwendu.replaceAll("℃", ""));
                         int barrary = 100;
-                     if(!TextUtils.isEmpty(BleService.batteryPower)){
-                         barrary  = Integer.valueOf(BleService.batteryPower);
-                     }else{
-                         if(!semdbattasy){
-                             sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
-                             semdbattasy = true;
-                         }
-                     }
-                     if(courntTempera>=37.5){
-                         post_thermometer_record(true,Float.valueOf(tempare),temphjwd,barrary);
-                         tv_home_child_tips.setText(R.string.fever);
-                     }else{
-                         post_thermometer_record(false,Float.valueOf(tempare),temphjwd,barrary);
-                         tv_home_child_tips.setText("您的体温在正常范围 (*^__^*)");
-                     }
-                    }catch (Exception e){
+                        if (!TextUtils.isEmpty(BleService.batteryPower)) {
+                            barrary = Integer.valueOf(BleService.batteryPower);
+                        } else {
+                            if (!semdbattasy) {
+                                sendCmd(BLEConfig.READ_DEVISE_POWER_CMD, null);
+                                semdbattasy = true;
+                            }
+                        }
+                        if (courntTempera >= 37.5) {
+                            post_thermometer_record(true, Float.valueOf(tempare), temphjwd, barrary);
+                            tv_home_child_tips.setText(R.string.fever);
+                        } else {
+                            post_thermometer_record(false, Float.valueOf(tempare), temphjwd, barrary);
+                            tv_home_child_tips.setText("您的体温在正常范围 (*^__^*)");
+                        }
+                    } catch (Exception e) {
                         tv_home_child_tips.setText("您的体温在正常范围 (*^__^*)");
                     }
-                    if(courntTempera>=42){
+                    if (courntTempera >= 42) {
                         AlarmNotificationManager.showHighTempNotification(homecontext, sheshidu);
-                        tempplaying42(con,sheshidu);
-                    }else {
+                        tempplaying42(con, sheshidu);
+                    } else {
 
 
                         float getsettemp = getsettemp();
@@ -967,7 +987,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                             if (!getTempIsSwitchswtich()) return;
 
                             //String strbody = String.valueOf(courntTempera);
-                           // Float fbody = Float.valueOf(strbody);
+                            // Float fbody = Float.valueOf(strbody);
 
                             tempplaying(con, tempare);
                             {
@@ -986,13 +1006,13 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                         ;
                     }
 
-                    if(courntTempera>maxTemperature){
+                    if (courntTempera > maxTemperature) {
                         maxTemperature = courntTempera;
-                        if(tv_home_child_max!=null)tv_home_child_max.setText(sheshidu);
+                        if (tv_home_child_max != null) tv_home_child_max.setText(sheshidu);
 
-                        LogUtil.inf(""+maxTemperature);
-                        if(maxTemperature>=highTemp){
-                           // AlarmNotificationManager.showHighTempNotification(homecontext,sheshidu);
+                        LogUtil.inf("" + maxTemperature);
+                        if (maxTemperature >= highTemp) {
+                            // AlarmNotificationManager.showHighTempNotification(homecontext,sheshidu);
 //                            MediaPlayer mp = new MediaPlayer();
 //                            try {
 //                                mp.setDataSource(homecontext, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
@@ -1002,36 +1022,36 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 //                                e.printStackTrace();
 //                            }
                             ChildSummary childsummer = queryChildSummary();
-                            if(childsummer==null){
+                            if (childsummer == null) {
                                 childsummer = new ChildSummary();
                                 childsummer.setMax(sheshidu);
-                            }else {
+                            } else {
                                 childsummer.setMax(sheshidu);
                             }
                             saveorupdate(childsummer);
                         }
                     }
 
-                    if(minTemperaTure==0.0){
-                        minTemperaTure=courntTempera;
+                    if (minTemperaTure == 0.0) {
+                        minTemperaTure = courntTempera;
                     }
-                    if(courntTempera<minTemperaTure){
-                        minTemperaTure=courntTempera;
-                       if(tv_home_child_min!=null) tv_home_child_min.setText(sheshidu);
+                    if (courntTempera < minTemperaTure) {
+                        minTemperaTure = courntTempera;
+                        if (tv_home_child_min != null) tv_home_child_min.setText(sheshidu);
 
                         ChildSummary childsummer = queryChildSummary();
-                        if(childsummer==null){
+                        if (childsummer == null) {
                             childsummer = new ChildSummary();
                             childsummer.setMin(sheshidu);
-                        }else {
+                        } else {
                             childsummer.setMin(sheshidu);
                         }
                         saveorupdate(childsummer);
-                    }else if( minTemperaTure==courntTempera){
-                        if(tv_home_child_min!=null)tv_home_child_min.setText(sheshidu);
+                    } else if (minTemperaTure == courntTempera) {
+                        if (tv_home_child_min != null) tv_home_child_min.setText(sheshidu);
                     }
 
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -1039,26 +1059,22 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         }
     }
 
-    private void saveorupdate(ChildSummary child){
+    private void saveorupdate(ChildSummary child) {
         ChildSummary first = null;
         try {
             first = EApp.getApp().db.findFirst(ChildSummary.class);
         } catch (DbException e) {
             e.printStackTrace();
         }
-        if(first!=null){
+        if (first != null) {
             child.setId(first.getId());
         }
-            try {
-                EApp.getApp().db.saveOrUpdate(child);
-            } catch (DbException e) {
-                e.printStackTrace();
-            }
+        try {
+            EApp.getApp().db.saveOrUpdate(child);
+        } catch (DbException e) {
+            e.printStackTrace();
+        }
     }
-
-
-
-
 
 
     /**
@@ -1066,33 +1082,49 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
      */
     private void onTips(String operate, String tips) {
         //tv_home_temp_operator.setClickable(false);
-        LogUtil.inf("======onTips=====");
+        LogUtil.inf("==========" + operate + tips);
 //        if( unbind ){
 //            LogUtil.inf("======unbind=====");
 //            tv_home_temp_operator.setText("扫描体温计");
 //            unbind =false;
 //        }else {
-            tv_home_temp_operator.setText(operate);
-            tv_home_temp_tips_shower.setText(tips);
+        tv_home_temp_operator.setText(operate);
+        tv_home_temp_tips_shower.setText(tips);
 //        }
     }
+
+    private static boolean startscan = true;
 
     /**
      * 扫描体温计
      */
     private void startScan() {
-        if(BluetoothAdapter.getDefaultAdapter().isEnabled()) {
-            sendCmd(BLEConfig.BLE_SCAN_CMD, null);//扫描体温计
-            tv_home_temp_operator.setText("扫描中...");
-            tv_home_temp_operator.setClickable(false);
-            startRotateAnim();
-        }else{
-            Toast.makeText(this, "请先打开蓝牙", Toast.LENGTH_LONG).show();
+        Log.e("hjs", "homeActivity startScan " + (BluetoothAdapter.getDefaultAdapter().isEnabled()));
+
+//        String mac = getremebermac();
+//        if ((mac.length() == 12) && startscan) {
+//            StringBuffer sb = new StringBuffer(mac);
+//            for (int i = 2; i < sb.length(); i += 3) {
+//                sb.insert(i, ":");
+//            }
+//            mac = (sb.toString().toUpperCase());
+//            sendCmd(BLEConfig.MAC_CONNECT_CMD, mac);
+//        } else
+            {
+            if (BluetoothAdapter.getDefaultAdapter().isEnabled()) {
+                sendCmd(BLEConfig.BLE_SCAN_CMD, null);//扫描体温计
+                tv_home_temp_operator.setText("扫描中...");
+                tv_home_temp_operator.setClickable(false);
+                startRotateAnim();
+            } else {
+                Toast.makeText(this, "请先打开蓝牙", Toast.LENGTH_LONG).show();
+            }
         }
     }
 
-    private  String tempaddress;
+    private String tempaddress;
     private static int connecttime = 0;
+
     /**
      * 蓝牙服务事件回调函数
      *
@@ -1103,42 +1135,49 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         int code = bleEvent.getCode();
         Bundle bundle = bleEvent.getExtra();
         String extra = "";
-        LogUtil.inf("==onMessageEventMainThread====code====="+code);
+        //LogUtil.inf("==onMessageEventMainThread====code====="+code);
         if (bundle != null) {
             extra = bundle.getString(BLEConfig.MSG_KEY);
         }
         switch (code) {
             case BLEConfig.BLE_IS_SCANNING: //正在扫描
+                LogUtil.inf("==BLE_IS_SCANNING");
                 onTips("扫描中", extra);
                 break;
             case BLEConfig.BLE_NEW_DEVICE:  //发现体温计
+                LogUtil.inf("==BLE_NEW_DEVICE");
                 if (bundle != null) {
                     device = bundle.getParcelable(BLEConfig.DEVICE_KEY);
                 }
                 LogUtil.inf("======BLE_NEW_DEVICE=====");
                 if (device != null) {
                     String address = device.getAddress();
-                    connectBle(address);
-                    tempaddress=address.replace(":","").toUpperCase();
+                    //connectBle(address);
+                    tempaddress = address.replace(":", "").toUpperCase();
+                    remebermac(tempaddress);
                 }
                 break;
             case BLEConfig.BLE_SCAN_FINISH: //扫描结束
+                LogUtil.inf("==BLE_SCAN_FINISH");
                 stopRotateAnim();
                 if (device == null) {
                     resetOperate("重新扫描", "没有发现可用的体温计，请打开体温计重试");
                 } else {
-                     onTips("连接中...", extra);
-                    if(myhomehan!=null)myhomehan.sendEmptyMessageDelayed(10,1000*20);
+                    onTips("连接中...", extra);
+                    if (myhomehan != null) myhomehan.removeMessages(10);
+                    if (myhomehan != null) myhomehan.sendEmptyMessageDelayed(10, 1000 * 60);
                 }
                 break;
             case BLEConfig.BLE_CONNECTING: //正在连接
+                ifbleisconnect = false;
                 onTips("连接中...", extra);
-               // if(myhomehan!=null)myhomehan.sendEmptyMessageDelayed(10,1000*40);
+                // if(myhomehan!=null)myhomehan.sendEmptyMessageDelayed(10,1000*40);
+                LogUtil.inf("==BLE_CONNECTING");
                 break;
             case BLEConfig.BLE_CONNECT_ERROR:
-                LogUtil.inf("重新扫描22=====");
+                LogUtil.inf("BLE_CONNECT_ERROR重新扫描22=====");
                 //onTips("重新扫描", extra);
-               // resetOperate("重新扫描", extra);
+                // resetOperate("重新扫描", extra);
                 break;
             case BLEConfig.BLE_CONNECTED://蓝牙服务正常连接了
                 LogUtil.inf("BLE_CONNECTED=====");
@@ -1155,48 +1194,52 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                         LogUtil.inf("same===============");
                         return;
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     return;
                 }
                 //onTips("读取中", extra);
                 //if(myhomehan!=null)myhomehan.sendEmptyMessageDelayed(20,1000*60);
-             LogUtil.inf("address=="+tempaddress);
-            if(!TextUtils.isEmpty(tempaddress)) {
-                try{
-                UserInfo userInfo = getApp().getUserInfo(this);
-                if(userInfo==null){
-                    userInfo = new UserInfo();
-                }
+                LogUtil.inf("address==" + tempaddress);
+                if (!TextUtils.isEmpty(tempaddress)) {
+                    try {
+                        UserInfo userInfo = getApp().getUserInfo(this);
+                        if (userInfo == null) {
+                            userInfo = new UserInfo();
+                        }
 
-                if(userInfo!=null) {
-                    if(userInfo.getMac()!=null) {
-                        if (!userInfo.getMac().equalsIgnoreCase(tempaddress.replaceAll(":", ""))) {
-                            try {
-                                String tempmac = tempaddress.replaceAll(":", "");
-                                //String name,String gender,String age,String height,String weight
-                                ChildSummary childsummer = queryChildSummary();
-                                if (childsummer != null) {
-                                    createchild(userInfo.getUid(), tempmac, childsummer.getName(), childsummer.getGender(), childsummer.getAge(), childsummer.getHeight(), childsummer.getWeight());
-                                    userInfo.setUsername(childsummer.getName());
+                        if (userInfo != null) {
+                            if (userInfo.getMac() != null) {
+                                if (!userInfo.getMac().equalsIgnoreCase(tempaddress.replaceAll(":", ""))) {
+                                    try {
+                                        String tempmac = tempaddress.replaceAll(":", "");
+                                        //String name,String gender,String age,String height,String weight
+                                        ChildSummary childsummer = queryChildSummary();
+                                        if (childsummer != null) {
+                                            createchild(userInfo.getUid(), tempmac, childsummer.getName(), childsummer.getGender(), childsummer.getAge(), childsummer.getHeight(), childsummer.getWeight());
+                                            userInfo.setUsername(childsummer.getName());
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
                                 }
-                            } catch (Exception e) {
-                                e.printStackTrace();
                             }
                         }
+
+                        userInfo.setMac(tempaddress.replaceAll(":", ""));
+                        getApp().setUserInfo(userInfo, this);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
 
-                    userInfo.setMac(tempaddress.replaceAll(":", ""));
-                getApp().setUserInfo(userInfo, this);
-            }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-
                 break;
             case BLEConfig.BLE_SERVER_DISCONNECTED:  //蓝牙服务断开连接了
-
-                if(BleService.evebleDevice!=null)BleManager.getInstance().disconnect(BleService.evebleDevice);
+                ifbleisconnect = true;
+                startscan = true;
+                setauto_falg = true;
+                LogUtil.inf("BLE_SERVER_DISCONNECTED=====");
+                if (BleService.evebleDevice != null)
+                    BleManager.getInstance().disconnect(BleService.evebleDevice);
                 BleManager.getInstance().disconnectAllDevice();
                 resetOperate("重新扫描", extra);
 
@@ -1210,20 +1253,8 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                         String macAddress = device.getAddress();
                         connectBle(macAddress);
                     });
-                    if (connecttime < 2) {
-                        if (device != null) {
-                            try {
-                                Thread.sleep(5000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            LogUtil.inf("BLE_SERVER_DISCONNECTED");
-                            String macAddress = device.getAddress();
-                            connectBle(macAddress);
-                        }
-                        connecttime++;
-                    }
                 }
+                startautoConnect();
 
                 MediaPlayer mp = new MediaPlayer();
                 try {
@@ -1235,49 +1266,62 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 }
                 break;
             case BLEConfig.BLE_TEMP_GET:  //得到温度
+                setauto_falg = false;
+                startscan = true;
+                ifwhiletruefailed = true;
+                ifbleisconnect = false;
+                LogUtil.inf("BLE_TEMP_GET=====");
                 stopRotateAnim();
                 onTips(extra, "体温监测中");
-                LogUtil.inf("BLE_TEMP_GET"+extra);
-                courntTempera =32;
-                maxMinTemperature(this,extra);
+                LogUtil.inf("BLE_TEMP_GET" + extra);
+                courntTempera = 32;
+                maxMinTemperature(this, extra);
                 break;
             case BLEConfig.BLE_EVM_TEMP_GET_2:  //体温计环境温度
+                setauto_falg = false;
                 stopRotateAnim();
                 try {
                     LogUtil.inf("BLE_hjs_TEMP_GET_2");
                     hjwendu = extra;
                     //onTips(extra, "体温监测中");
                     //Mackicktemo(getCurrActivity(),extra);
-                }catch (Exception e){
+                } catch (Exception e) {
                 }
 
-
-              break;
+                LogUtil.inf("BLE_EVM_TEMP_GET_2=====");
+                break;
             case BLEConfig.BLE_DEVICE_NOT_FOUND: //体温计不可用，需要重新扫描
+                startscan = false;
                 resetOperate("重新扫描", extra);
+                LogUtil.inf("BLE_DEVICE_NOT_FOUND=====");
                 break;
             case BLEConfig.BLE_OFF_LINE:
                 showBleClosedDialog(extra);
+                LogUtil.inf("BLE_DEVICE_NOT_FOUND=====");
                 break;
             case BLEConfig.BLE_ON_LINE:
                 showTips(extra);
                 if (device != null) {
-                     tempaddress = device.getAddress();
+                    tempaddress = device.getAddress();
 
-                    LogUtil.info("重连中 address"+tempaddress);
+                    LogUtil.info("重连中 address" + tempaddress);
                     onTips("重连中", "蓝牙已重新打开正常尝试重连");
                     connectBle(tempaddress);
                 } else {
-                    resetOperate("重新扫描", "蓝牙已重新打开，请重新扫描体温计");
+                    resetOperate("扫描体温计", "蓝牙已打开，请扫描体温计");
                 }
+
+                LogUtil.inf("BLE_DEVICE_NOT_FOUND=====");
                 break;
             case BLEConfig.BLE_RELEASE_DEVICE: //体温计已解除
+                LogUtil.inf("BLE_RELEASE_DEVICE=====");
                 resetOperate("扫描体温计", extra);
                 //this.finish();
                 android.os.Process.killProcess(android.os.Process.myPid());
                 System.exit(0);
                 break;
             case DownloadConfig.DOWN_LOAD_STARTED:
+                LogUtil.inf("DOWN_LOAD_STARTED=====");
                 showTips(extra);
                 break;
             case DownloadConfig.DOWN_LOAD_FAILED:
@@ -1296,9 +1340,9 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
     private boolean semdbattasy = false;
 
-    public static String hjwendu  = "";
+    public static String hjwendu = "";
 
-    private void createchild(String pid,String mac,String name,String gender,String age,String height,String weight){
+    private void createchild(String pid, String mac, String name, String gender, String age, String height, String weight) {
         CreateChildPost post = new CreateChildPost();
         //post.handler(this);
         post.setPid(pid);
@@ -1313,18 +1357,18 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
     }
 
-   String  Thermometer_mac;
-    private static   int post_thermometer_record_time;///上传记录次数
+    String Thermometer_mac;
+    private static int post_thermometer_record_time;///上传记录次数
 
-    private void  post_thermometer_record(boolean ifsupertemp,float temperature,int rommtemp,int batt){
-    if((post_thermometer_record_time<0)||(post_thermometer_record_time>100)){
-        post_thermometer_record_time = 0;
-    }
+    private void post_thermometer_record(boolean ifsupertemp, float temperature, int rommtemp, int batt) {
+        if ((post_thermometer_record_time < 0) || (post_thermometer_record_time > 100)) {
+            post_thermometer_record_time = 0;
+        }
         post_thermometer_record_time++;
-        if((post_thermometer_record_time>=12)||ifsupertemp){
+        if ((post_thermometer_record_time >= 12) || ifsupertemp) {
 //        if(true){
             post_thermometer_record_time = 0;
-            CreateThermometerRecord   post = new CreateThermometerRecord();
+            CreateThermometerRecord post = new CreateThermometerRecord();
             post.code(0x0031);
             post.handler(this);
             post.setBase_station_mac("000000000000000000000000");
@@ -1470,15 +1514,17 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             }
         }
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             if (requestCode == DEVICE_DETAIL) { //解除了体温计
+                ifbleisconnect = true;
                 boolean unbind = data.getBooleanExtra("unbind", false);
                 if (unbind) {
                     device = null;
                     LogUtil.info("体温计被解除了");
-                    Log.e("hjs_home","onActivityResult");
+                    Log.e("hjs_home", "onActivityResult");
                     sendCmd(BLEConfig.BLE_DISCONNECT_CMD, null);//连接
                 }
             } else if (requestCode == LOGIN_CODE) {
@@ -1487,7 +1533,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                     String uid = info.getUid();
                     if (!TextUtils.isEmpty(uid)) {
                         tv_home_log_out.setVisibility(View.VISIBLE);
-                        if(TextUtils.isEmpty(info.getMac())) {
+                        if (TextUtils.isEmpty(info.getMac())) {
                             //dialogshow(uid);
                         }
                     } else {
@@ -1500,10 +1546,6 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
-
-
-
-
 
 
     private Animation connectRotaAni = null;
@@ -1526,7 +1568,8 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
      * 结束  连接蓝牙旋转动画
      */
     private void stopRotateAnim() {
-        if(circle_view_home_temp_indicator!=null)circle_view_home_temp_indicator.clearAnimation();
+        if (circle_view_home_temp_indicator != null)
+            circle_view_home_temp_indicator.clearAnimation();
     }
 
     /**
@@ -1567,12 +1610,12 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
     @Override
     protected void onDestroy() {
-        Log.e("hjs","onDestroy");
+        Log.e("hjs", "onDestroy");
         semdbattasy = false;
         super42 = false;
         show42Tempflag = true;
-        showTempflag  = true;
-        gaowentemp =false;
+        showTempflag = true;
+        gaowentemp = false;
 
 //        device = null;
 //        try {
@@ -1661,13 +1704,13 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             } else {
                 showTips(res.msg());
             }
-        }else if(code == ChECK_MONITOR){
+        } else if (code == ChECK_MONITOR) {
             try {
                 MonitorRes res = Tools.json2Bean(result, MonitorRes.class);
                 LogUtil.info("getFever_times===" + res.getMessage().getFever_times());
-              String  fstime =   res.getMessage().getFever_times();
-                tv_home_child_count.setText(fstime+"次");
-            }catch (Exception e){
+                String fstime = res.getMessage().getFever_times();
+                tv_home_child_count.setText(fstime + "次");
+            } catch (Exception e) {
 
             }
 
@@ -1695,7 +1738,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     @Override
     protected void onPause() {
         super.onPause();
-        isFront =false;
+        isFront = false;
     }
 
     @Override
@@ -1716,33 +1759,35 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
         isFront = true;
         ChildSummary childsummer = queryChildSummary();
-        Log.e("hjs","childsummer="+childsummer);
-        if(childsummer!=null){
-            if(childsummer.getName()!=null){
+        Log.e("hjs", "childsummer=" + childsummer);
+        if (childsummer != null) {
+            if (childsummer.getName() != null) {
                 tv_home_child_name.setText(childsummer.getName());
 
-                try{
+                try {
                     UserInfo userInfo = getApp().getUserInfo(this);
-                    if(userInfo==null){
+                    if (userInfo == null) {
                         userInfo = new UserInfo();
                     }
                     userInfo.setUsername(childsummer.getName());
                     getApp().setUserInfo(userInfo, this);
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            if(childsummer.getHeight()!=null)tv_home_child_height.setText(childsummer.getHeight());
-            if(childsummer.getWeight()!=null)tv_home_child_weight.setText(childsummer.getWeight());
-            if(childsummer.getAge()!=null)tv_home_child_age.setText(childsummer.getAge());
-            if(childsummer.getGender()!=null){
-                if(childsummer.getGender().equalsIgnoreCase("1")) {
+            if (childsummer.getHeight() != null)
+                tv_home_child_height.setText(childsummer.getHeight());
+            if (childsummer.getWeight() != null)
+                tv_home_child_weight.setText(childsummer.getWeight());
+            if (childsummer.getAge() != null) tv_home_child_age.setText(childsummer.getAge());
+            if (childsummer.getGender() != null) {
+                if (childsummer.getGender().equalsIgnoreCase("1")) {
                     tv_home_child_gender.setText("男");
-                }else{
+                } else {
                     tv_home_child_gender.setText("女");
                 }
             }
-        }else{
+        } else {
             tv_home_child_height.setText("");
             tv_home_child_weight.setText("");
             tv_home_child_age.setText("");
@@ -1750,15 +1795,15 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         }
 
 
-        try{
+        try {
             UserInfo userInfo = getApp().getUserInfo(this);
-            if(userInfo==null){
+            if (userInfo == null) {
                 userInfo = new UserInfo();
             }
-            if((userInfo.getUid()!=null)) {
-                addMonitor(userInfo.getUid(),userInfo.getMac());
+            if ((userInfo.getUid() != null)) {
+                addMonitor(userInfo.getUid(), userInfo.getMac());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -1798,7 +1843,9 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             showTips("检查更新出错，请重试");
         }
     }
+
     private long exitTime = 0;
+
     /**
      * 回退
      *
@@ -1812,7 +1859,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 
             if ((System.currentTimeMillis() - exitTime) > 2000) { // System.currentTimeMillis()无论何时调用，肯定大于2000
 
-                Intent intent = new Intent(Intent.ACTION_MAIN,null);
+                Intent intent = new Intent(Intent.ACTION_MAIN, null);
                 intent.addCategory(Intent.CATEGORY_HOME);
                 startActivity(intent);
                 //ToastUtil.show(this, "再按一次退出程序");
@@ -1826,11 +1873,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     }
 
 
-
-
-
-
-    private ChildSummary queryChildSummary(){
+    private ChildSummary queryChildSummary() {
         try {
             ChildSummary first = null;
             try {
@@ -1841,71 +1884,28 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
             if (first != null) LogUtil.inf(first.toString());
             //添加查询条件进行查询
             return first;
-        }catch (Exception e){
+        } catch (Exception e) {
             return null;
         }
     }
-//    String phonemac;
-//    private void dialogshow(String uid){
-//        if(device==null) {
-//        MacInputDialog inputDialog = new MacInputDialog(getCurrActivity());
-//        inputDialog.setTitle("请输入要绑定体温计的MAC地址");
-//        inputDialog.setContentHint("请输入体温计地址");
-//        inputDialog.setOnOk(v -> {
-//            phonemac = inputDialog.getContent();
-//            if (TextUtils.isEmpty(phonemac)) {
-//                inputDialog.errorAlert("请输入体温计地址");
-//                return;
-//            }
-//            inputDialog.dismiss();
-//            addMonitor(uid, phonemac);
-//        });
-//        inputDialog.setOnCancel(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                //currFinish();
-//                inputDialog.dismiss();
-//            }
-//        });
-//
-//        int wid = getCurrActivity().getResources().getDimensionPixelOffset(R.dimen.size_300);
-//        inputDialog.create(wid, ViewGroup.LayoutParams.WRAP_CONTENT);
-//        inputDialog.show();
-//        }
-//    }
 
 
-//    private final int ADD_MONITOR = 0x0046;
-//
-//    private void addMonitor(String uid, String phone) {
-//        QueryMonitorPost post = new QueryMonitorPost();
-//        post.code(ADD_MONITOR);
-//        post.handler(this);
-//        post.setThermometerID(phone);
-//        post.setPid(uid);
-//        post.post();
-//    }
-
-
-
-
-
-    public void Mackicktemo(Context ton,String extra){
-        try{
-            emvcourntTempera = Double.valueOf(extra.replaceAll("℃",""));
-        }catch (Exception e){
+    public void Mackicktemo(Context ton, String extra) {
+        try {
+            emvcourntTempera = Double.valueOf(extra.replaceAll("℃", ""));
+        } catch (Exception e) {
         }
 
-        if(!getkickalarmswtich()){
+        if (!getkickalarmswtich()) {
             return;
         }
 
-        float kicktemp  =getkickIsSwitchtemp();
-        if((kicktemp>0 && (emvcourntTempera<kicktemp))){
+        float kicktemp = getkickIsSwitchtemp();
+        if ((kicktemp > 0 && (emvcourntTempera < kicktemp))) {
             String strroom = String.valueOf(emvcourntTempera);
-            Float froom= Float.valueOf(strroom);
-            kickpalying(ton,froom);
-            AlarmNotificationManager.showKickTempNotification(homecontext,""+extra);
+            Float froom = Float.valueOf(strroom);
+            kickpalying(ton, froom);
+            AlarmNotificationManager.showKickTempNotification(homecontext, "" + extra);
 //            MediaPlayer mp = new MediaPlayer();
 //            try {
 //                mp.setDataSource(homecontext, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
@@ -1914,7 +1914,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 //            } catch (IOException e) {
 //                e.printStackTrace();
 //            }
-           // myhomehan.sendEmptyMessageDelayed(3,1000*60*10);
+            // myhomehan.sendEmptyMessageDelayed(3,1000*60*10);
         }
     }
 
@@ -1929,11 +1929,11 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         @Override
         public void handleMessage(Message msg) {
             final Activity activity = mWeakReference.get();
-            Log.e("hjs","msg.============"+msg.what);
+            Log.e("hjs", "msg.============" + msg.what);
             if (activity != null) {
                 if (msg.what == 1) {
-                }else if(msg.what==2){
-                    Log.e("hjs","msg.what==2==");
+                } else if (msg.what == 2) {
+                    Log.e("hjs", "msg.what==2==");
 //                    if(!getkickalarmswtich()){
 //                        return;
 //                    }
@@ -1953,42 +1953,43 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 //                        }
 //                          myhomehan.sendEmptyMessageDelayed(3,1000*60*10);
 //                    }
-                }else if(msg.what==3){
-                    Log.e("hjs","msg.what==3==");
-                    if(!getkickalarmswtich()){
+                } else if (msg.what == 3) {
+                    Log.e("hjs", "msg.what==3==");
+                    if (!getkickalarmswtich()) {
                         //myhomehan.sendEmptyMessageDelayed(3,1000*60*10);
                         return;
                     }
 //                    if(courntTempera>20) {
 //                        sendCmd(BLEConfig.BLE_EVM_TEMP_GET, null);
 //                    }
-                }else if(msg.what==10){
+                } else if (msg.what == 10) {
                     try {
-                        String textmsg= tv_home_temp_operator.getText().toString();
-                        if (textmsg.startsWith("读取中")||(textmsg.startsWith("连接中"))||(courntTempera<=0)){
-                        if (device != null) {
-                            String address = device.getAddress();
-                            connectBle(address);
-                            tempaddress=address.replace(":","").toUpperCase();
-                            myhomehan.sendEmptyMessageDelayed(20,1000*20);
-                        }else{
-                            resetOperate("重新扫描","");
-                        }
-                       // resetOperate("重新扫描","");
+                        String textmsg = tv_home_temp_operator.getText().toString();
+                        if (textmsg.startsWith("读取中") || (textmsg.startsWith("连接中")) || (courntTempera <= 0)) {
+                            if (device != null) {
+                                String address = device.getAddress();
+                                connectBle(address);
+                                tempaddress = address.replace(":", "").toUpperCase();
+                                myhomehan.sendEmptyMessageDelayed(20, 1000 * 20);
+                            } else {
+                                resetOperate("重新扫描", "");
+                            }
+                            // resetOperate("重新扫描","");
 //                        myhomehan.removeMessages(10);
 //                        Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage(getApplication().getPackageName());
 //                        LaunchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 //                        startActivity(LaunchIntent);
-                    }else{
-                        myhomehan.removeMessages(10);
-                    }}catch (Exception e){
-                        resetOperate("重新扫描","");
+                        } else {
+                            myhomehan.removeMessages(10);
+                        }
+                    } catch (Exception e) {
+                        resetOperate("重新扫描", "");
                     }
 
-                }else if(msg.what==20){
+                } else if (msg.what == 20) {
                     try {
-                        String textmsg= tv_home_temp_operator.getText().toString();
-                        if (textmsg.startsWith("读取中")||(textmsg.startsWith("连接中")) || (courntTempera <= 0)) {
+                        String textmsg = tv_home_temp_operator.getText().toString();
+                        if (textmsg.startsWith("读取中") || (textmsg.startsWith("连接中")) || (courntTempera <= 0)) {
 //                            onDestroy();
                             myhomehan.removeMessages(20);
                             resetOperate("重新扫描", "");
@@ -1998,7 +1999,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 //                            currFinish();
 
                         }
-                    }catch (Exception e){
+                    } catch (Exception e) {
 //                        onDestroy();
                         myhomehan.removeMessages(20);
                         resetOperate("重新扫描", "");
@@ -2006,16 +2007,16 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 //                        LaunchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 //                        startActivity(LaunchIntent);
                     }
-                }else if(msg.what==30){
+                } else if (msg.what == 30) {
                     isPlay = 2;
                     SPUtils.put(homecontext, "isRing", true);
-                    myhomehan.sendEmptyMessageDelayed(40,1000*60*10);
-                }else if(msg.what==40){
-                    isPlay=0;
+                    myhomehan.sendEmptyMessageDelayed(40, 1000 * 60 * 10);
+                } else if (msg.what == 40) {
+                    isPlay = 0;
                     SPUtils.put(homecontext, "isRing", false);
-                }else if(msg.what==50){
+                } else if (msg.what == 50) {
 
-                    subtime1min42  =subtime10min42;
+                    subtime1min42 = subtime10min42;
                     SPUtils.put(homecontext, "superisRing", false);
                     isSuperPlay = 0;
                     Log.e("hjs", "判断isplayrun方法执行");
@@ -2064,4 +2065,130 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         post.post();
     }
 
+    private boolean setauto_falg = true;
+    private void startautoConnect(){
+
+        new Thread(() -> {
+            while (setauto_falg) {
+                Log.d("hjs", " setauto_falg :"+setauto_falg);
+                try {
+                    Thread.sleep(1000 * 10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    Log.e("hjs", "BleService.evebleDevice!=null" + (BleService.evebleDevice!=null));
+                    if(BleService.evebleDevice!=null) {
+                        if (!BleManager.getInstance().isConnected(BleService.evebleDevice)) {
+                            Log.d("hjs", "  String macAddress = device.getAddress();=" + device);
+                            device = BleService.evebleDevice.getDevice();
+                            String macAddress = device.getAddress();
+                            Log.d("hjs", "macAddress:" + macAddress);
+                            remebermac(macAddress.replaceAll(":", ""));
+                            connectBle(macAddress);
+                            ifwhiletruefailed = true;
+                        }
+                    }else {
+                        Log.d("hjs", " startScan");
+                        String mac = getremebermac();
+                        Log.d("hjs", " mac:" + mac);
+                        if ((mac.length() == 12) && startscan) {
+                            StringBuffer sb = new StringBuffer(mac);
+                            for (int i = 2; i < sb.length(); i += 3) {
+                                sb.insert(i, ":");
+                            }
+                            mac = (sb.toString().toUpperCase());
+                            sendCmd(BLEConfig.MAC_CONNECT_CMD, mac);
+                        }
+                    }
+                } catch (Exception e) {
+                  e.printStackTrace();
+                    Log.d("hjs", " e.printStackTrace()");
+                }
+
+                try {
+                    Thread.sleep(1000 * 60);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }).start();
+    }
+
+
+//    private void check_Version() {
+//        RequestParams params = new RequestParams("http://39.105.40.32:9000/api/download/app-release.apk");
+//        params.setAutoResume(true);//设置是否在下载是自动断点续传
+//        params.setAutoRename(false);//设置是否根据头信息自动命名文件
+//        params.setSaveFilePath("/aa.apk");
+//        params.setCancelFast(true);
+//        x.http().get(params, new Callback.ProgressCallback<File>() {
+//            @Override
+//            public void onCancelled(CancelledException arg0) {
+//                Log.i("tag", "取消"+Thread.currentThread().getName());
+//            }
+//
+//            @Override
+//            public void onError(Throwable arg0, boolean arg1) {
+//                Log.i("tag", "onError: 失败"+Thread.currentThread().getName());
+//            }
+//
+//            @Override
+//            public void onFinished() {
+//                Log.i("tag", "完成,每次取消下载也会执行该方法"+Thread.currentThread().getName());
+//            }
+//
+//            @Override
+//            public void onSuccess(File arg0) {
+//                Log.i("tag", "下载成功的时候执行"+Thread.currentThread().getName());
+//            }
+//
+//            @Override
+//            public void onLoading(long total, long current, boolean isDownloading) {
+//                if (isDownloading) {
+//                    Log.i("tag", "下载中,会不断的进行回调:"+Thread.currentThread().getName());
+//                }
+//            }
+//
+//            @Override
+//            public void onStarted() {
+//                Log.i("tag", "开始下载的时候执行"+Thread.currentThread().getName());
+//            }
+//
+//            @Override
+//            public void onWaiting() {
+//                Log.i("tag", "等待,在onStarted方法之前执行"+Thread.currentThread().getName());
+//            }
+//
+//        });
+//    }
+//
+
+//    public void createDialog(final String appName, final String loadPath, String des) {
+//        android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(this);
+//        alert.setTitle("软件升级").setMessage("发现新版本,建议立即更新使用.")
+//                .setPositiveButton("更新", new DialogInterface.OnClickListener() {
+//
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        // TODO Auto-generated method stub
+//                        Intent intent = new Intent(getApplicationContext(), com.Alan.eva.service.UpdateService.class);
+//                        Bundle bundle = new Bundle();
+//                        bundle.putString("app_version", appName);
+//                        bundle.putString("loadPath", loadPath);
+//                        intent.putExtras(bundle);
+//                        startService(intent);
+//                    }
+//                }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+//
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                // TODO Auto-generated method stub
+//                dialog.dismiss();
+//            }
+//
+//        });
+//        alert.create().show();
+//    }
 }

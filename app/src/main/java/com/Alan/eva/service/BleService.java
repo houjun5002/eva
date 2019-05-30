@@ -136,7 +136,7 @@ public class BleService extends Service {
         stopScan(); //停止扫描
         LogUtil.info("onDestroy");
         disconnect(); //断开连接
-        closeBle(); //关闭蓝牙
+        //closeBle(); //关闭蓝牙
         BleManager.getInstance().destroy();
         super.onDestroy();
     }
@@ -146,7 +146,7 @@ public class BleService extends Service {
      * 打开蓝牙
      */
     private void openBle() {
-        Log.e("hjs","==============openBle=========");
+        Log.e("hjs","==============openBle========="+(!bluetooth.isEnabled()));
         if (!bluetooth.isEnabled()){
 //            openflag =false;
             BleManager.getInstance().enableBluetooth();
@@ -191,7 +191,11 @@ public class BleService extends Service {
 
         String mac = "";
 
-        boolean isAutoConnect =true;
+        boolean isAutoConnect =false;
+
+        BleManager.getInstance().enableLog(true)
+                .setReConnectCount(1, 5000)
+                .setOperateTimeout(15000);
 
         BleScanRuleConfig scanRuleConfig = new BleScanRuleConfig.Builder()
                 .setServiceUuids(serviceUuids)      // 只扫描指定的服务的设备，可选
@@ -219,13 +223,19 @@ public class BleService extends Service {
 
             @Override
             public void onScanning(BleDevice bleDevice) {
+                LogUtil.inf("BLe onScanning ====");
                 evebleDevice = bleDevice;
+                LogUtil.inf("BLe onScanning ===="+bleDevice.getDevice().getName());
                 BluetoothDevice device = evebleDevice.getDevice();
                 LogUtil.info(""+device.getName()+" | "+device.getAddress());
-
-                if ((device!=null) && BluetoothAdapter.checkBluetoothAddress(device.getAddress())) {  //mac地址是否符合要求
+                LogUtil.inf("checkBluetoothAddress ===="+ BluetoothAdapter.checkBluetoothAddress(device.getAddress()));
+                if ( BluetoothAdapter.checkBluetoothAddress(device.getAddress())) {  //mac地址是否符合要求
                     String name = device.getName();
+
+                    LogUtil.inf("name ===="+ name);
+
                     if (!TextUtils.isEmpty(name) && name.length() > 3) { //名称是否不为空且长度大于3
+                        LogUtil.inf("name ===="+ name);
                         if (name.toUpperCase().contains("EVE")) { //体温计是否包含EVE字符
                             Bundle bundle = new Bundle();
                             bundle.putParcelable(BLEConfig.DEVICE_KEY, device);
@@ -233,6 +243,13 @@ public class BleService extends Service {
                             sendMsg(BLEConfig.BLE_NEW_DEVICE, bundle);
 
                             stopScan();
+                            LogUtil.inf("                               connect(bleDevice) ====");
+                            try {
+                                Thread.sleep(500);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            connect(bleDevice);
                         }
                     }
                 }
@@ -245,7 +262,13 @@ public class BleService extends Service {
             }
         });
     }
-
+//    String[] uuids = {
+//    "0000fff0-0000-1000-8000-00805f9b34fb",
+//    "0000fff5-0000-1000-8000-00805f9b34fb",
+//   "0000fff6-0000-1000-8000-00805f9b34fb",
+//    "0000180f-0000-1000-8000-00805f9b34fb",
+//  "00002a19-0000-1000-8000-00805f9b34fb"
+//    };
 
     private void setmacScanRule(String mac) {
         String[] uuids;
@@ -269,13 +292,13 @@ public class BleService extends Service {
             }
         }
 
-        String[] names;
-        String str_name = "EVE";
-        if (TextUtils.isEmpty(str_name)) {
-            names = null;
-        } else {
-            names = str_name.split(",");
-        }
+//        String[] names;
+//        String str_name = "";
+//        if (TextUtils.isEmpty(str_name)) {
+//            names = null;
+//        } else {
+//            names = str_name.split(",");
+//        }
 
         Log.e("hjs","mac "+mac);
 
@@ -283,9 +306,9 @@ public class BleService extends Service {
 
         BleScanRuleConfig scanRuleConfig = new BleScanRuleConfig.Builder()
                 .setServiceUuids(serviceUuids)      // 只扫描指定的服务的设备，可选
-                .setDeviceName(true, names)   // 只扫描指定广播名的设备，可选
+//                .setDeviceName(true, names)   // 只扫描指定广播名的设备，可选
                 .setDeviceMac(mac)                  // 只扫描指定mac的设备，可选
-                .setAutoConnect(isAutoConnect)      // 连接时的autoConnect参数，可选，默认false
+                .setAutoConnect(false)      // 连接时的autoConnect参数，可选，默认false
                 .setScanTimeOut(18000)              // 扫描超时时间，可选，默认10秒
                 .build();
         BleManager.getInstance().initScanRule(scanRuleConfig);
@@ -320,6 +343,13 @@ public class BleService extends Service {
                             sendMsg(BLEConfig.BLE_NEW_DEVICE, bundle);
 
                             stopScan();
+                            LogUtil.inf("                               connect(bleDevice) ====");
+                            try {
+                                Thread.sleep(500);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            connect(bleDevice);
                         }
                     }
                 }
@@ -355,7 +385,7 @@ public class BleService extends Service {
                 openBle();
                 break;
             case BLEConfig.BLE_CLOSE: //关闭手机蓝牙
-                closeBle();
+                //closeBle();
                 break;
             case BLEConfig.BLE_SCAN_CMD:  //扫描体温计
                 startScan();
@@ -387,11 +417,10 @@ public class BleService extends Service {
                     } else {
                     }
                 }
-
-
+                LogUtil.info("MAC_CONNECT_CMD");
                 break;
             case BLEConfig.BLE_DISCONNECT_CMD:
-                Log.e("hjsBLE_DISCONNECT_CMD","BLE_DISCONNECT_CMD");
+
                // stopLoop();
                 LogUtil.info("BLE_DISCONNECT_CMD");
                // disconnect();
@@ -481,12 +510,14 @@ public class BleService extends Service {
        // openBle();
         //stopScan();  //停止扫描
         if(bleDevice!=null &&  (!BleManager.getInstance().isConnected(bleDevice))) {
-            LogUtil.inf("callBack" + (callBack == null));
-            callBack = new DataBleCallBackEx(this);
+            LogUtil.inf("callBack===" + (callBack == null));
+            if(callBack==null) {
+                callBack = new DataBleCallBackEx(this);
+            }
 
             try {
-                BleManager.getInstance().connect(bleDevice, callBack);
-                bluetoothGatt = bleDevice.getDevice().connectGatt(this, false, callBack);
+                bluetoothGatt = BleManager.getInstance().connect(bleDevice, callBack);
+//                bluetoothGatt = bleDevice.getDevice().connectGatt(this, false, callBack);
                 LogUtil.inf("bluetoothGatt==");
             }catch (Exception e){
                 e.printStackTrace();
@@ -719,7 +750,9 @@ public class BleService extends Service {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            callBack.onCharacteristicRead(bluetoothGatt,tempCharacteristic, BluetoothGatt.GATT_SUCCESS);
+            if(callBack!=null){
+                callBack.onCharacteristicRead(bluetoothGatt,tempCharacteristic, BluetoothGatt.GATT_SUCCESS);
+            }else return;
             return;
         }
         bleDevice = evebleDevice;

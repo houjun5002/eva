@@ -32,6 +32,10 @@ import com.Alan.eva.tools.PathUtils;
 import com.Alan.eva.tools.PixelUtils;
 import com.Alan.eva.tools.SPUtils;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xutils.ex.HttpException;
+import org.xutils.http.HttpMethod;
 
 
 public class FifthFragment extends FragmentActivity implements OnClickListener {
@@ -298,16 +302,15 @@ public class FifthFragment extends FragmentActivity implements OnClickListener {
 	}
 
 	private void checkVersion() {
-		// TODO Auto-generated method stub
-		// 网络访问得到版本号，下载地址
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-
+//		// TODO Auto-generated method stub
+//		// 网络访问得到版本号，下载地址
+//		new Thread(new Runnable() {
+//
+//			@Override
+//			public void run() {
+//				// TODO Auto-generated method stub
+//
 //				x.http().get()
-
 //				mUtils.send(HttpMethod.GET, PathUtils.update(VersionUtils.getVerCode(getActivity())),
 //						new RequestCallBack<String>() {
 //
@@ -351,9 +354,9 @@ public class FifthFragment extends FragmentActivity implements OnClickListener {
 //
 //							}
 //						});
-			}
-		}).start();
-
+//			}
+//		}).start();
+//
 	}
 
 	public void createDialog(final String appName, final String loadPath, String des) {

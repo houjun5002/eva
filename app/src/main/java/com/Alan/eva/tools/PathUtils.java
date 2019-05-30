@@ -93,7 +93,7 @@ public class PathUtils {
 	}
 
 	public static String update(int versionCode) {
-		return "http://101.201.30.238/api/index.php/Home/update/checkVersion?code=" + versionCode;
+		return "http://39.105.40.32:9000/api/download" + versionCode;
 	}
 
 }

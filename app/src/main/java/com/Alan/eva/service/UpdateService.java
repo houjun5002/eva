@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.Alan.eva.R;
 
 import org.xutils.ex.HttpException;
+import org.xutils.x;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,7 +82,7 @@ public class UpdateService extends Service {
 			Log.e(TAG, updateDir.getPath());
 			updateFile = new File(updateDir.getPath(), app_version);
 		} else {
-			Toast.makeText(this, "sdk卡不可用", Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, "存储卡不可用", Toast.LENGTH_SHORT).show();
 		}
 
 		new Thread(new Runnable() {
@@ -104,7 +105,7 @@ public class UpdateService extends Service {
 //				downloadUpdateFile(loadPath
 //						// VersionUtils.getVerCode(getApplicationContext()))
 //						, updateFile.toString());
-				Log.e(TAG, loadPath);
+//				Log.e(TAG, loadPath);
 			}
 		}).start();
 
@@ -154,12 +155,11 @@ public class UpdateService extends Service {
 //		updateNotificationManager.notify(0, notification);
 //
 //	}
-
+//
 //	public void downloadUpdateFile(String downloadUrl, String saveFile) {
 //		final Message message = updateHandler.obtainMessage();
 //
-//		mUtils = new HttpUtils();
-//		mUtils.download(downloadUrl, saveFile, true, true, new RequestCallBack<File>() {
+//		x.http().download(downloadUrl, saveFile, true, true, new RequestCallBack<File>() {
 //			@Override
 //			public void onStart() {
 //				// TODO Auto-generated method stub
