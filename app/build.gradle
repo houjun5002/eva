@@ -37,9 +37,9 @@ android {
 
 dependencies {
     compile project(':xutils')
-    compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:support-v4:26+'
+    compile 'com.android.support:appcompat-v7:26+'
+    compile 'com.android.support:design:26+'
     compile files('libs/gson-2.2.1.jar')
     compile 'org.greenrobot:eventbus:3.0.0'
     compile 'com.wuxiaolong.pullloadmorerecyclerview:library:1.1.1'
@@ -48,4 +48,7 @@ dependencies {
     compile project(path: ':chart')
     compile project(':FastBleLib')
     compile project(':wifi')
+    implementation 'com.azhon:appupdate:2.1.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.9.1'
+    implementation 'com.squareup.okio:okio:1.16.0'
 }

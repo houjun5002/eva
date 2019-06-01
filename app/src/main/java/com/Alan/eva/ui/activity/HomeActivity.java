@@ -3,7 +3,10 @@ package com.Alan.eva.ui.activity;
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.DownloadManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
@@ -19,6 +22,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.RequiresApi;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -53,6 +57,7 @@ import com.Alan.eva.config.BleEvent;
 import com.Alan.eva.config.DownloadConfig;
 import com.Alan.eva.config.URlConfig;
 import com.Alan.eva.foreground.DaemonService;
+import com.Alan.eva.http.OkHttpManager;
 import com.Alan.eva.http.core.IResultHandler;
 import com.Alan.eva.http.get.CheckVersionGet;
 import com.Alan.eva.http.get.ChildSummaryGet;
@@ -70,6 +75,7 @@ import com.Alan.eva.result.VersionRes;
 import com.Alan.eva.service.BleService;
 import com.Alan.eva.service.ServiceUtils;
 import com.Alan.eva.service.ToastUtil;
+import com.Alan.eva.service.UpdateService;
 import com.Alan.eva.tools.LogUtil;
 import com.Alan.eva.tools.PathUtils;
 import com.Alan.eva.tools.SPUtils;
@@ -88,6 +94,8 @@ import com.Alan.eva.ui.widget.TempCircleView;
 import com.clj.fastble.BleManager;
 import com.clj.fastble.data.BleDevice;
 import com.github.mikephil.charting.utils.EntryXComparator;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.umeng.analytics.MobclickAgent;
 
 import org.greenrobot.eventbus.EventBus;
@@ -106,10 +114,12 @@ import org.xutils.x;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.Alan.eva.config.BLEConfig.CMD_EXTRA;
@@ -557,6 +567,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         }
     }
 
+
     public static boolean ifwhiletruefailed = true;
 
     public static boolean ifbleisconnect = false;
@@ -604,8 +615,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     @Override
     protected void onStart() {
         super.onStart();
-
-
+        getServerVer(getApplicationContext());
     }
 
 
@@ -1744,7 +1754,6 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     @Override
     protected void onResume() {
         super.onResume();
-
 //        new Handler().postDelayed(new Runnable() {
 //            @Override
 //            public void run() {
@@ -2027,32 +2036,6 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
     }
 
 
-//    public void requestMultiPermissionbt(){
-//        requestPermissions(this, new String[]{
-//                        Manifest.permission.BLUETOOTH,},
-//                new RequestPermissionCallBack() {
-//                    @Override
-//                    public void granted() {
-//                        BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
-//                        if (bluetooth == null) {
-//                            //showBleErrorDialog();
-//                            return;
-//                        }
-//
-//                        if(ServiceUtils.isServiceRunning(getCurrActivity(),"BleService")){
-//                            BleService    bleserver =  new BleService();
-//                            bleserver.stopSelf();
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void denied() {
-//                        Toast.makeText(HomeActivity.this, "获取权限失败，正常功能受到影响", Toast.LENGTH_LONG).show();
-//                    }
-//                });
-//    }
-
-
     private final int ChECK_MONITOR = 0x0146;
 
     private void addMonitor(String uid, String mac) {
@@ -2116,69 +2099,90 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         }).start();
     }
 
+    public static  String IP = "www.zhengqidun.com";
+    public static final String HOST_Update_APK = "http://"+IP+":8080/csm-web/download/app/wzkt/wzkt.apk";
+    public static final String HOST_Update_JSON = "http://"+IP+":8080/csm-web/download/app/wzkt/wzkt.json";
 
-//    private void check_Version() {
-//        RequestParams params = new RequestParams("http://39.105.40.32:9000/api/download/app-release.apk");
-//        params.setAutoResume(true);//设置是否在下载是自动断点续传
-//        params.setAutoRename(false);//设置是否根据头信息自动命名文件
-//        params.setSaveFilePath("/aa.apk");
-//        params.setCancelFast(true);
-//        x.http().get(params, new Callback.ProgressCallback<File>() {
-//            @Override
-//            public void onCancelled(CancelledException arg0) {
-//                Log.i("tag", "取消"+Thread.currentThread().getName());
-//            }
-//
-//            @Override
-//            public void onError(Throwable arg0, boolean arg1) {
-//                Log.i("tag", "onError: 失败"+Thread.currentThread().getName());
-//            }
-//
-//            @Override
-//            public void onFinished() {
-//                Log.i("tag", "完成,每次取消下载也会执行该方法"+Thread.currentThread().getName());
-//            }
-//
-//            @Override
-//            public void onSuccess(File arg0) {
-//                Log.i("tag", "下载成功的时候执行"+Thread.currentThread().getName());
-//            }
-//
-//            @Override
-//            public void onLoading(long total, long current, boolean isDownloading) {
-//                if (isDownloading) {
-//                    Log.i("tag", "下载中,会不断的进行回调:"+Thread.currentThread().getName());
-//                }
-//            }
-//
-//            @Override
-//            public void onStarted() {
-//                Log.i("tag", "开始下载的时候执行"+Thread.currentThread().getName());
-//            }
-//
-//            @Override
-//            public void onWaiting() {
-//                Log.i("tag", "等待,在onStarted方法之前执行"+Thread.currentThread().getName());
-//            }
-//
-//        });
-//    }
-//
 
-//    public void createDialog(final String appName, final String loadPath, String des) {
+    int newVerCode;
+    public void getServerVer(final Context context) {
+
+        OkHttpManager okHttpManager;
+        okHttpManager = OkHttpManager.getInstance();
+        okHttpManager.asyncJsonStringByURL(HOST_Update_JSON, new OkHttpManager.StringCallBack() {
+            @Override
+            public void onResponse(String result) {
+                //Log.e("hjs","getServerVer="+result);
+               LogUtil.inf("getServerVer="+result);
+                Gson gson = new Gson();
+                Type type = new TypeToken<Map<String, Object>>() {}.getType();
+                Map<String, Object> datas = gson.fromJson(result.replace("[","").replace("]",""), type);
+
+                Double oo=  (Double)datas.get("verCode");
+                newVerCode=oo.intValue();
+
+                int verCode = getVerCode(getApplicationContext());
+                if (newVerCode > verCode) {
+                    showUpdateDialog();
+                } else {
+                }
+            }
+            @Override
+            public void onFailed() {
+                LogUtil.inf("getServerVer= failed");
+            }
+        });
+    }
+    public static int getVerCode(Context context) {
+        int verCode = -1;
+        try {
+           return BuildConfig.VERSION_CODE;
+           // verCode = context.getPackageManager().getPackageInfo("com.wzkt.eva", 0).versionCode;
+        } catch (Exception e) {
+            LogUtil.inf(e.getMessage());
+        }
+        return verCode;
+    }
+
+    /**
+     * 有新版本
+     */
+    private void showUpdateDialog() {
+        if(!isServiceRunning(this,"UpdateService")) {
+            Intent intent = new Intent(HomeActivity.this, UpdateService.class);
+            intent.putExtra("Key_App_Name","wzkt" );
+            intent.putExtra("Key_Down_Url", HOST_Update_APK);
+            startService(intent);
+        };
+    }
+    /**
+     * 校验某个服务是否还存在
+     */
+    public static boolean isServiceRunning(Context context,String serviceName){
+        // 校验服务是否还存在
+        ActivityManager am = (ActivityManager) context
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> services = am.getRunningServices(100);
+        for (ActivityManager.RunningServiceInfo info : services) {
+            // 得到所有正在运行的服务的名称
+            String name = info.service.getClassName();
+            if (serviceName.equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+//    public void createDialog() {
 //        android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(this);
-//        alert.setTitle("软件升级").setMessage("发现新版本,建议立即更新使用.")
+//        alert.setTitle("软件升级").setMessage("蓝牙体温计发现新版本,请更新使用.")
 //                .setPositiveButton("更新", new DialogInterface.OnClickListener() {
 //
 //                    @Override
 //                    public void onClick(DialogInterface dialog, int which) {
-//                        // TODO Auto-generated method stub
-//                        Intent intent = new Intent(getApplicationContext(), com.Alan.eva.service.UpdateService.class);
-//                        Bundle bundle = new Bundle();
-//                        bundle.putString("app_version", appName);
-//                        bundle.putString("loadPath", loadPath);
-//                        intent.putExtras(bundle);
-//                        startService(intent);
+//
 //                    }
 //                }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
 //
@@ -2191,4 +2195,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 //        });
 //        alert.create().show();
 //    }
+
+
+
 }
