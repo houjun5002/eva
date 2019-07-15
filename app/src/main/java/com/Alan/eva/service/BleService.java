@@ -517,7 +517,7 @@ public class BleService extends Service {
 
             try {
                 bluetoothGatt = BleManager.getInstance().connect(bleDevice, callBack);
-//                bluetoothGatt = bleDevice.getDevice().connectGatt(this, false, callBack);
+//             //   bluetoothGatt = bleDevice.getDevice().connectGatt(this, false, callBack);
                 LogUtil.inf("bluetoothGatt==");
             }catch (Exception e){
                 e.printStackTrace();

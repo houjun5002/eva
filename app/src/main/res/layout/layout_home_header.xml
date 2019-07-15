@@ -59,16 +59,62 @@
                 app:wheel_unactive_color="@color/white" />
         </FrameLayout>
 
-        <android.support.v7.widget.AppCompatTextView
-            android:id="@+id/tv_home_temp_tips_shower"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:background="@color/theme_color"
-            android:gravity="center_horizontal"
-            android:padding="@dimen/size_10"
-            android:text="扫描体温计"
-            android:textColor="@color/white" />
+            android:orientation="vertical">
+
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/tv_home_temp_tips_shower"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:background="@color/theme_color"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/size_10"
+                android:text="扫描体温计"
+                android:textColor="@color/white" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:background="@color/white"
+                >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="只连接此体温计:"
+                    android:layout_marginStart="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text=""
+                    android:layout_centerInParent="true"
+                    android:id="@+id/remeber_mac"
+                    />
+
+                <Switch
+                    android:layout_width="100dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:id="@+id/switch_mac_onoff"
+                    android:textOn="绑定"
+                    android:textOff="解除"
+                    android:checked="false"
+                    />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <include
+            layout="@layout/layout_vertical_gray_line"
+            android:layout_width="0.5dp"
+            android:layout_height="match_parent" />
 
         <include layout="@layout/layout_home_basic_info" />
     </LinearLayout>

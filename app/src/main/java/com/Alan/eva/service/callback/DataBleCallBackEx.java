@@ -4,6 +4,8 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothProfile;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 
 import com.Alan.eva.config.BLEConfig;
@@ -291,8 +293,16 @@ public class DataBleCallBackEx extends BleGattCallback implements IResultHandler
     public void onConnectFail(BleDevice bleDevice, BleException exception) {
         LogUtil.info("onConnectFail");
         if(HomeActivity.ifwhiletruefailed) {
-            HomeActivity.ifwhiletruefailed = false;
-            service.sendMsg(BLEConfig.BLE_SCAN_CMD, "");
+            try {
+                if (HomeActivity.getswithc) {
+                    service.sendMsg(BLEConfig.MAC_CONNECT_CMD, HomeActivity.phonemac);
+                } else {
+                    HomeActivity.ifwhiletruefailed = false;
+                    service.sendMsg(BLEConfig.BLE_SCAN_CMD, "");
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
 //        LogUtil.inf("onConnectFail exception");
 //        service.sendMsg(BLEConfig.BLE_CONNECT_ERROR, "连接体温计异常，请重试");//正在连接

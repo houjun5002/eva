@@ -45,8 +45,10 @@ import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -253,10 +255,51 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         homecontext = this;
         myhomehan = new MyHandler(getCurrActivity());
 
+        remeber_mac = (TextView) getView(R.id.remeber_mac);
+        Switch remeber_switch =(Switch) getView(R.id.switch_mac_onoff);
+      String mac= getremebermac();
 
+        remeber_mac.setText(mac);
+        Log.d("hjs", " mac:" + mac);
+        if ((mac.length() == 12)) {
+            StringBuffer sb = new StringBuffer(mac);
+            for (int i = 2; i < sb.length(); i += 3) {
+                sb.insert(i, ":");
+            }
+            mac = (sb.toString().toUpperCase());
+            phonemac = mac;
+            Log.d("hjs", " mac:" + phonemac);
+        }
+
+        remeber_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                remeberswitch(isChecked);
+                getswithc = isChecked;
+                LogUtil.inf("getswithc:"+getswithc);
+            }
+        });
+
+        remeber_switch.setChecked(getswitch());
+        getswithc = getswitch();
+        LogUtil.inf("getswithc:"+getswithc);
 //        SPUtils.put(homecontext, "isRing", false);
 //        SPUtils.put(homecontext, "superisRing", false);
 //        SPUtils.put(homecontext, "dengbei", false);
+    }
+    TextView remeber_mac;
+
+    public static boolean getswithc = false;
+
+    private boolean getswitch() {
+        SharedPreferences pres = getCurrActivity().getSharedPreferences("switch", Context.MODE_PRIVATE);
+        return pres.getBoolean("switch", false);
+    }
+    private void remeberswitch(boolean flag) {
+        SharedPreferences pres = getCurrActivity().getSharedPreferences("switch", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pres.edit();
+        editor.putBoolean("switch", flag);
+        editor.commit();
     }
 
 
@@ -430,7 +473,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
         return pres.getString("inputmac", "");
     }
 
-    String phonemac;
+    public  static  String phonemac;
 
     private void input_dialogshow() {
         MacInputDialog inputDialog = new MacInputDialog(getCurrActivity());
@@ -1122,7 +1165,12 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
 //        } else
             {
             if (BluetoothAdapter.getDefaultAdapter().isEnabled()) {
-                sendCmd(BLEConfig.BLE_SCAN_CMD, null);//扫描体温计
+                if((!TextUtils.isEmpty(phonemac))&&(getswitch())){
+                    sendCmd(BLEConfig.MAC_CONNECT_CMD, phonemac);
+                    Log.e("hjs", "只扫描 phonemac "+phonemac);
+                }else {
+                    sendCmd(BLEConfig.BLE_SCAN_CMD, null);//扫描体温计
+                }
                 tv_home_temp_operator.setText("扫描中...");
                 tv_home_temp_operator.setClickable(false);
                 startRotateAnim();
@@ -1165,6 +1213,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                     //connectBle(address);
                     tempaddress = address.replace(":", "").toUpperCase();
                     remebermac(tempaddress);
+                    remeber_mac.setText(tempaddress);
                 }
                 break;
             case BLEConfig.BLE_SCAN_FINISH: //扫描结束
@@ -1286,6 +1335,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                 LogUtil.inf("BLE_TEMP_GET" + extra);
                 courntTempera = 32;
                 maxMinTemperature(this, extra);
+
                 break;
             case BLEConfig.BLE_EVM_TEMP_GET_2:  //体温计环境温度
                 setauto_falg = false;
@@ -2067,6 +2117,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                             device = BleService.evebleDevice.getDevice();
                             String macAddress = device.getAddress();
                             Log.d("hjs", "macAddress:" + macAddress);
+                            phonemac = macAddress;
                             remebermac(macAddress.replaceAll(":", ""));
                             connectBle(macAddress);
                             ifwhiletruefailed = true;
@@ -2081,6 +2132,7 @@ public class HomeActivity extends AbsActivity implements View.OnClickListener, I
                                 sb.insert(i, ":");
                             }
                             mac = (sb.toString().toUpperCase());
+                            phonemac = mac;
                             sendCmd(BLEConfig.MAC_CONNECT_CMD, mac);
                         }
                     }
